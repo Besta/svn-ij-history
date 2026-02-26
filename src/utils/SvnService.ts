@@ -1,9 +1,8 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
-import * as vscode from 'vscode';
 import { DateUtils } from './DateUtils';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 /**
  * Represents a single SVN commit entry with its metadata and affected files.
@@ -27,12 +26,16 @@ export interface SvnCommit {
 
 /**
  * Service class to handle Subversion (SVN) CLI operations and XML parsing.
+ * Uses execFile (not exec) to avoid shell injection vulnerabilities.
  */
 export class SvnService {
+    /** Cached repository root URL — fetched once and reused. */
+    private _repoRootCache?: string;
+
     /**
      * @param workspaceRoot The local file system path to the SVN workspace.
      */
-    constructor(private workspaceRoot: string) {}
+    constructor(private workspaceRoot: string) { }
 
     /**
      * Fetches the SVN log history using the command line.
@@ -40,10 +43,13 @@ export class SvnService {
      * @returns A promise resolving to an array of SvnCommit objects.
      */
     public async getHistory(limit: number = 50): Promise<SvnCommit[]> {
-        // We use --xml and --verbose to get both structured data and the list of changed files
-        const { stdout } = await execAsync(`svn log --limit ${limit} --xml --verbose`, { 
-            cwd: this.workspaceRoot 
-        });
+        // Use --xml and --verbose to get both structured data and the list of changed files.
+        // execFile is used instead of exec to prevent shell injection.
+        const { stdout } = await execFileAsync(
+            'svn',
+            ['log', '--limit', String(limit), '--xml', '--verbose'],
+            { cwd: this.workspaceRoot }
+        );
         return this.parseXml(stdout);
     }
 
@@ -54,67 +60,54 @@ export class SvnService {
      * @returns The raw string content of the file.
      */
     public async getFileContent(repoUrl: string, rev: string): Promise<string> {
-        // Using @rev syntax to handle files that might have been moved or deleted in HEAD
-        const { stdout } = await execAsync(`svn cat "${repoUrl}@${rev}"`, { cwd: this.workspaceRoot });
+        // Using @rev syntax to handle files that might have been moved or deleted in HEAD.
+        const { stdout } = await execFileAsync(
+            'svn',
+            ['cat', `${repoUrl}@${rev}`],
+            { cwd: this.workspaceRoot }
+        );
         return stdout;
     }
 
     /**
      * Retrieves the repository root URL.
+     * The result is cached after the first call since it never changes during a session.
      * @returns The base URL of the SVN repository.
      */
     public async getRepoRoot(): Promise<string> {
-        const { stdout } = await execAsync(`svn info --xml`, { cwd: this.workspaceRoot });
-        const match = stdout.match(/<root>(.*?)<\/root>/);
-        return match ? match[1] : "";
-    }
-
-    /**
-     * Fetches all unique authors from the SVN history.
-     * @returns A promise resolving to a sorted array of unique usernames.
-     */
-    public async getAllAuthors(): Promise<string[]> {
-        try {
-            // Eseguiamo un log senza --verbose per ottenere solo i metadati base (più veloce)
-            const { stdout } = await execAsync(`svn log --xml`, { cwd: this.workspaceRoot });
-            const authors = new Set<string>();
-            const authorRegex = /<author>(.*?)<\/author>/g;
-            
-            let match;
-            while ((match = authorRegex.exec(stdout)) !== null) {
-                if (match[1]) {
-                    authors.add(match[1]);
-                }
-            }
-            return Array.from(authors).sort();
-        } catch (error) {
-            console.error('Error fetching SVN authors:', error);
-            return [];
+        if (this._repoRootCache !== undefined) {
+            return this._repoRootCache;
         }
+        const { stdout } = await execFileAsync('svn', ['info', '--xml'], { cwd: this.workspaceRoot });
+        const match = stdout.match(/<root>(.*?)<\/root>/);
+        this._repoRootCache = match ? match[1] : '';
+        return this._repoRootCache;
     }
 
     /**
-     * Manually parses the SVN XML output into SvnCommit objects.
-     * Note: Manual regex parsing is used here for performance and to avoid heavy XML dependencies.
+     * Parses SVN XML log output into SvnCommit objects.
+     * Matches complete <logentry> blocks with a regex to avoid breakage from
+     * messages containing "</logentry>" literally (safer than split-based approach).
      * @param xml The raw XML string from SVN CLI.
      * @private
      */
     private parseXml(xml: string): SvnCommit[] {
         const commits: SvnCommit[] = [];
-        const blocks = xml.split('</logentry>');
+        const blockRegex = /<logentry[\s\S]*?<\/logentry>/g;
+        let blockMatch;
 
-        for (const block of blocks) {
-            if (!block.includes('<logentry')) continue;
+        while ((blockMatch = blockRegex.exec(xml)) !== null) {
+            const block = blockMatch[0];
 
-            const rev = block.match(/revision="(\d+)"/)?.[1] || "";
-            const author = block.match(/<author>(.*?)<\/author>/)?.[1] || "No author";
-            const dateStr = block.match(/<date>(.*?)<\/date>/)?.[1] || "";
-            const msg = block.match(/<msg>([\s\S]*?)<\/msg>/)?.[1] || "<no comment>";
-            
+            const rev = block.match(/revision="(\d+)"/)?.[1] ?? '';
+            const author = block.match(/<author>(.*?)<\/author>/)?.[1] ?? 'No author';
+            const dateStr = block.match(/<date>(.*?)<\/date>/)?.[1] ?? '';
+            const msg = block.match(/<msg>([\s\S]*?)<\/msg>/)?.[1] ?? '<no comment>';
+
             const date = new Date(dateStr);
             const files: { action: string; path: string }[] = [];
             const pathRegex = /<path[^>]*?action="(.*?)"[^>]*?>([\s\S]*?)<\/path>/g;
-            
+
             let m;
             while ((m = pathRegex.exec(block)) !== null) {
                 files.push({ action: m[1], path: m[2].trim() });

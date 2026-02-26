@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-02-26
+
+### Security
+- **XSS Prevention**: All commit data (author, message, file paths) is now injected into the webview via `textContent` and `dataset` attributes instead of `innerHTML`, eliminating cross-site scripting vectors.
+- **Content Security Policy**: Added a per-load CSP `<meta>` tag with a cryptographic nonce, blocking any unauthorized script execution in the webview.
+- **Shell Injection Prevention**: Replaced `child_process.exec()` (string interpolation) with `execFile()` (argument array) for all SVN CLI calls, eliminating shell injection risk.
+- **Inline onclick Removal**: File action links now use `data-*` attributes with a single delegated event listener, removing the last XSS-injectable surface.
+
+### Changed
+- **Webview Architecture**: Extracted the 370-line HTML/CSS/JS template literal from `SvnHistoryViewProvider.ts` into three dedicated files under `media/` (`webview.html`, `webview.css`, `webview.js`). The provider now reads and serves these files at runtime, reducing its webpack bundle size by ~73% (38.5 KiB → 10.1 KiB).
+- **SVN XML Parser**: Switched from `split('</logentry>')` to a `/<logentry...>...<\/logentry>/g` regex, preventing parse failures caused by commit messages containing that literal string.
+- **Repository Root Caching**: `getRepoRoot()` now caches its result, avoiding a redundant SVN CLI invocation on every diff open.
+
+### Fixed
+- **Temp File Leak**: Diff temp files written to `os.tmpdir()` are now tracked and deleted when the webview panel is closed or the extension is deactivated.
+- **Search Debounce**: Added a 150 ms debounce to the search input, preventing unnecessary re-renders on every keystroke.
+- **isFile Detection**: Path-to-file detection now also checks for a trailing `/` to avoid misclassifying dot-named directories (e.g. `.github`) as files.
+
+### Removed
+- **Dead code**: Removed unused `getAllAuthors()` method from `SvnService`.
+
+---
+
 ## [1.0.3] - 2026-02-26
 
 ### Fixed

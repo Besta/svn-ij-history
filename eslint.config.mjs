@@ -18,6 +18,9 @@ export default [{
             selector: "import",
             format: ["camelCase", "PascalCase"],
         }],
+        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/explicit-function-return-type": ["warn", { allowExpressions: true }],
+        "no-console": ["warn", { allow: ["error", "warn"] }],
 
         curly: "warn",
         eqeqeq: "warn",

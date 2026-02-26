@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'none'; script-src 'nonce-{{nonce}}'; style-src {{cspSource}} 'unsafe-inline';">
+    <link rel="stylesheet" href="{{cssUri}}">
+</head>
+<body>
+    <div id="search-bar-container">
+        <input type="text" id="search-input" class="native-input" placeholder="Filter by message, author, or revision...">
+    </div>
+    <div id="status-bar">Loading history...</div>
+
+    <div id="main-content">
+        <div id="commit-list">
+            <div id="list-container"></div>
+            <div id="load-more-container">
+                <button id="btn-load-more" class="load-more-btn">Load 50 more commits...</button>
+            </div>
+        </div>
+        <div id="resizer"></div>
+        <div id="details-panel">
+            <div id="details-header">
+                <span style="font-weight:bold">Details</span>
+                <span class="close-btn" id="btn-close-details">×</span>
+            </div>
+            <div id="detail-body">
+                <h3 id="det-rev"></h3>
+                <div id="det-msg"></div>
+                <div id="det-files"></div>
+            </div>
+        </div>
+    </div>
+
+    <script nonce="{{nonce}}" src="{{scriptUri}}"></script>
+</body>
+</html>
