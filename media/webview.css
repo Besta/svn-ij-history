@@ -188,6 +188,13 @@ summary:hover {
     flex-shrink: 0;
 }
 
+.c-files {
+    opacity: 0.6;
+    font-size: 0.9em;
+    width: 70px;
+    flex-shrink: 0;
+}
+
 .c-user {
     font-weight: bold;
     width: 100px;

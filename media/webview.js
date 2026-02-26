@@ -234,11 +234,14 @@
         div.addEventListener('click', () => showDetails(c, div));
 
         const spanRev = makeEl('span', 'c-rev', 'r' + c.rev);
+        const fileCount = c.files.length;
+        const fileLabel = fileCount === 1 ? 'file' : 'files';
+        const spanFiles = makeEl('span', 'c-files', `[${fileCount} ${fileLabel}]`);
         const spanUser = makeEl('span', 'c-user', c.author);
         const spanMsg = makeEl('span', 'c-msg', c.msg);
         const spanDate = makeEl('span', 'c-date', c.displayDate);
 
-        div.append(spanRev, spanUser, spanMsg, spanDate);
+        div.append(spanRev, spanFiles, spanUser, spanMsg, spanDate);
         return div;
     }
 
