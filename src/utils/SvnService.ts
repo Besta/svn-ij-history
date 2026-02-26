@@ -18,10 +18,8 @@ export interface SvnCommit {
 export class SvnService {
     constructor(private workspaceRoot: string) {}
 
-    public async getHistory(limit: number = 50, searchPath?: string): Promise<SvnCommit[]> {
-        const target = searchPath || this.workspaceRoot;
-        // Chiediamo a SVN i log in formato XML per un parsing robusto
-        const { stdout } = await execAsync(`svn log --limit ${limit} --xml --verbose "${target}"`, { 
+    public async getHistory(limit: number = 50): Promise<SvnCommit[]> {
+        const { stdout } = await execAsync(`svn log --limit ${limit} --xml --verbose`, { 
             cwd: this.workspaceRoot 
         });
         return this.parseXml(stdout);

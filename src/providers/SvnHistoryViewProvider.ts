@@ -8,6 +8,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
 	public static readonly viewType = 'svn-ij-history.view';
 	private _view?: vscode.WebviewView;
 	private _svnService: SvnService;
+	private _currentLimit = 50;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
@@ -23,7 +24,6 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
 			const rootUrl = await this._svnService.getRepoRoot();
 			const fullUrl = `${rootUrl}${repoPath}`;
 
-			// Usiamo il servizio per recuperare i contenuti
 			const [currContent, prevContent] = await Promise.all([
 				this._svnService.getFileContent(fullUrl, rev),
 				this._svnService.getFileContent(fullUrl, prevRev).catch(() => "")
@@ -47,25 +47,36 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private async openLocalFile(repoPath: string, isFolderRequested: boolean = false) {
-		const parts = repoPath.split('/');
-		const targetName = parts.pop();
-		if (!targetName) return;
+		const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+		if (!workspacePath) return;
 
-		// Se è richiesta la cartella, cerchiamo la cartella che contiene il file
-		const searchPattern = isFolderRequested ? `**/` : `**/${targetName}`;
+		// Proviamo a mappare il percorso SVN sul disco locale
+		// Rimuoviamo trunk/branches/tags per trovare il path relativo nel workspace
+		const cleanRelPath = repoPath.replace(/^\/(trunk|branches\/[^/]+|tags\/[^/]+)\//, '');
+		const absolutePath = path.join(workspacePath, cleanRelPath);
 
-		const files = await vscode.workspace.findFiles(`**/${targetName}`, '**/node_modules/**', 1);
-
-		if (files.length > 0) {
+		if (fs.existsSync(absolutePath)) {
+			const uri = vscode.Uri.file(absolutePath);
 			if (isFolderRequested) {
-				// Rivela il file nel side bar (che di fatto mostra la cartella)
-				await vscode.commands.executeCommand('revealInExplorer', files[0]);
+				await vscode.commands.executeCommand('revealInExplorer', uri);
 			} else {
-				// Apri il file nell'editor
-				await vscode.window.showTextDocument(files[0]);
+				await vscode.window.showTextDocument(uri);
 			}
 		} else {
-			vscode.window.showErrorMessage("File non trovato nel workspace locale.");
+			// Fallback: ricerca per nome file se il path strutturato fallisce
+			const targetName = repoPath.split('/').pop();
+			if (!targetName) return;
+			const files = await vscode.workspace.findFiles(`**/${targetName}`, '**/node_modules/**', 1);
+
+			if (files.length > 0) {
+				if (isFolderRequested) {
+					await vscode.commands.executeCommand('revealInExplorer', files[0]);
+				} else {
+					await vscode.window.showTextDocument(files[0]);
+				}
+			} else {
+				vscode.window.showErrorMessage("Impossibile trovare il file nel workspace locale.");
+			}
 		}
 	}
 
@@ -79,37 +90,33 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
 
 		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-		// Gestione messaggi in arrivo dalla Webview
 		webviewView.webview.onDidReceiveMessage(async (data) => {
 			switch (data.command) {
 				case 'refresh':
+					this._currentLimit = 50;
 					await this.loadHistory();
 					break;
-				case 'search':
-					await this.loadHistory(data.text);
-					break;
-				case 'showDiff':
-					// Implementeremo nel prossimo step
+				case 'loadMore':
+					this._currentLimit += 50;
+					await this.loadHistory();
 					break;
 				case 'openDiff':
 					await this.showDiff(data.path, data.rev);
 					break;
 				case 'openLocal':
-					await this.openLocalFile(data.path);
+					// Passiamo correttamente il flag folder
+					await this.openLocalFile(data.path, data.folder === true);
 					break;
 			}
 		});
 
-		// Caricamento iniziale automatico
 		this.loadHistory();
 	}
 
-	private async loadHistory(filter?: string) {
+	private async loadHistory() {
 		if (!this._view) return;
-
 		try {
-			const commits = await this._svnService.getHistory(50);
-			// Inviamo i dati alla webview
+			const commits = await this._svnService.getHistory(this._currentLimit);
 			this._view.webview.postMessage({ command: 'updateCommits', commits });
 		} catch (err: any) {
 			vscode.window.showErrorMessage("Errore SVN: " + err.message);
@@ -127,34 +134,22 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
         <style>
             body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: var(--vscode-font-family); color: var(--vscode-foreground); overflow: hidden; }
             #search-bar { padding: 8px 12px; border-bottom: 1px solid var(--vscode-panel-border); display: flex; gap: 8px; background: var(--vscode-panel-background); z-index: 30; }
-            
             #main-content { display: flex; flex: 1; overflow: hidden; position: relative; width: 100%; }
-            
-            /* LISTA COMMIT */
             #commit-list { flex: 1; min-width: 0; overflow-y: auto; background: var(--vscode-sideBar-background); }
-            
-            /* RESIZER */
             #resizer { width: 5px; cursor: col-resize; background: var(--vscode-panel-border); display: none; z-index: 100; flex-shrink: 0; }
             #resizer:hover { background: var(--vscode-focusBorder); }
-
-            /* PANNELLO DETTAGLI */
-            #details-panel { width: 400px; min-width: 200px; display: none; flex-direction: column; background: var(--vscode-editor-background); flex-shrink: 0; }
+            #details-panel { width: 50%; min-width: 200px; display: none; flex-direction: column; background: var(--vscode-editor-background); flex-shrink: 0; }
             #details-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-panel-sectionHeader-background); }
-
-            /* ACCORDION */
-            summary { padding: 6px 12px; cursor: pointer; font-weight: bold; font-size: 0.85em; background: var(--vscode-panel-sectionHeader-background); position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--vscode-panel-border); outline: none; }
-            
-            /* RIGA COMMIT */
+            summary { padding: 8px 12px; cursor: pointer; font-weight: bold; font-size: 0.85em; background-color: var(--vscode-sideBarSectionHeader-background, var(--vscode-editor-background)); color: var(--vscode-sideBarSectionHeader-foreground);position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--vscode-panel-border);outline: none;user-select: none;}
+			summary:hover {filter: brightness(1.1);}
+			details {background-color: var(--vscode-sideBar-background)}
             .commit-row { display: flex; align-items: center; padding: 4px 12px; gap: 12px; cursor: pointer; border-bottom: 1px solid var(--vscode-panel-border); font-size: 0.85em; white-space: nowrap; overflow: hidden; }
             .commit-row:hover { background: var(--vscode-list-hoverBackground); }
             .commit-row.selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
-            
             .c-rev { color: var(--vscode-textLink-foreground); font-family: var(--vscode-editor-font-family); width: 60px; flex-shrink: 0; }
             .c-user { font-weight: bold; width: 100px; flex-shrink: 0; text-overflow: ellipsis; overflow: hidden; }
             .c-msg { flex: 1; overflow: hidden; text-overflow: ellipsis; }
             .c-date { opacity: 0.5; width: 110px; text-align: right; flex-shrink: 0; }
-
-            /* LINKS DETTAGLI FILE (Punto 3) */
             .file-item { padding: 6px 12px; border-bottom: 1px solid var(--vscode-panel-border); font-size: 0.85em; }
             .file-path { display: block; margin-bottom: 4px; font-family: var(--vscode-editor-font-family); word-break: break-all; white-space: normal; }
             .file-links { display: flex; gap: 12px; font-size: 0.9em; }
@@ -162,9 +157,11 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
             .text-link:hover { text-decoration: underline; }
             .action-tag { font-weight: bold; margin-right: 6px; }
             .A { color: #73c991; } .M { color: #e2c08d; } .D { color: #f85149; }
-            
             .close-btn { cursor: pointer; opacity: 0.7; font-size: 1.2em; }
             .close-btn:hover { opacity: 1; }
+			#load-more-container {padding: 15px;display: flex;justify-content: center;}
+			.load-more-btn {background: var(--vscode-button-secondaryBackground);color: var(--vscode-button-secondaryForeground);border: none;padding: 6px 12px;cursor: pointer;font-size: 0.9em;border-radius: 2px;}
+			.load-more-btn:hover {background: var(--vscode-button-secondaryHoverBackground);}
         </style>
     </head>
     <body>
@@ -174,7 +171,6 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 <span class="codicon codicon-refresh"></span>
             </vscode-button>
         </div>
-        
         <div id="main-content">
             <div id="commit-list"><div id="list-container"></div></div>
             <div id="resizer"></div>
@@ -190,15 +186,13 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 </div>
             </div>
         </div>
-
         <script>
             const vscode = acquireVsCodeApi();
             const detailsPanel = document.getElementById('details-panel');
             const resizer = document.getElementById('resizer');
-            const commitList = document.getElementById('commit-list');
+            let allCommits = [];
             let isResizing = false;
 
-            // --- GESTIONE RESIZER ---
             resizer.addEventListener('mousedown', (e) => {
                 isResizing = true;
                 document.addEventListener('mousemove', handleMouseMove);
@@ -216,61 +210,78 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 }
             }
 
-            // --- MESSAGGI ---
             window.addEventListener('message', event => {
                 if (event.data.command === 'updateCommits') {
-                    renderHistory(event.data.commits);
+                    allCommits = event.data.commits;
+                    renderHistory(allCommits);
                 }
             });
 
             function renderHistory(commits) {
                 const container = document.getElementById('list-container');
                 container.innerHTML = '';
-                const groups = {};
+                const groups = new Map();
                 commits.forEach(c => {
-                    groups[c.groupLabel] = groups[c.groupLabel] || [];
-                    groups[c.groupLabel].push(c);
-                });
-
-                for (const label in groups) {
-                    const details = document.createElement('details');
-                    details.open = true;
-                    details.innerHTML = \`<summary>\${label}</summary>\`;
-                    groups[label].forEach(c => {
-                        const div = document.createElement('div');
-                        div.className = 'commit-row';
-                        div.onclick = () => showDetails(c, div);
-                        div.innerHTML = \`
-                            <span class="c-rev">r\${c.rev}</span>
-                            <span class="c-user">\${c.author}</span>
-                            <span class="c-msg">\${c.msg}</span>
-                            <span class="c-date">\${c.displayDate}</span>
-                        \`;
-                        details.appendChild(div);
-                    });
-                    container.appendChild(details);
-                }
+					if (!groups.has(c.groupLabel)) {
+						groups.set(c.groupLabel, []);
+					}
+					groups.get(c.groupLabel).push(c);
+				});
+                groups.forEach((commitsInGroup, label) => {
+					const details = document.createElement('details');
+					details.open = true;
+					details.innerHTML = \`<summary>\${label}</summary>\`;
+					
+					commitsInGroup.forEach(c => {
+						const div = document.createElement('div');
+						div.className = 'commit-row';
+						div.onclick = () => showDetails(c, div);
+						div.innerHTML = \`
+							<span class="c-rev">r\${c.rev}</span>
+							<span class="c-user">\${c.author}</span>
+							<span class="c-msg">\${c.msg}</span>
+							<span class="c-date">\${c.displayDate}</span>
+						\`;
+						details.appendChild(div);
+					});
+					container.appendChild(details);
+				});
+				if (commits.length > 0) {
+					const loadMoreDiv = document.createElement('div');
+					loadMoreDiv.id = 'load-more-container';
+					loadMoreDiv.innerHTML = \`
+						<button class="load-more-btn" onclick="this.innerText='Caricamento...'; vscode.postMessage({command:'loadMore'})">
+							Carica altri 50 commit...
+						</button>
+					\`;
+					container.appendChild(loadMoreDiv);
+				}
             }
 
             function showDetails(commit, el) {
                 document.querySelectorAll('.commit-row').forEach(r => r.classList.remove('selected'));
                 el.classList.add('selected');
-                
                 detailsPanel.style.display = 'flex';
                 resizer.style.display = 'block';
-
                 document.getElementById('det-rev').innerText = 'Revisione ' + commit.rev;
                 document.getElementById('det-msg').innerText = commit.msg;
 
-                const filesHtml = commit.files.map(f => \`
+                const filesHtml = commit.files.map(f => {
+                    const fileName = f.path.split('/').pop() || "";
+                    const isFile = fileName.includes('.');
+                    return \`
                     <div class="file-item">
                         <span class="file-path"><span class="action-tag \${f.action}">\${f.action}</span>\${f.path}</span>
                         <div class="file-links">
-                            <span class="text-link" onclick="vscode.postMessage({command:'openDiff', path:'\${f.path}', rev:'\${commit.rev}'})">Diff</span>
-                            <span class="text-link" onclick="vscode.postMessage({command:'openLocal', path:'\${f.path}'})">Vai al file</span>
-                            <span class="text-link" onclick="vscode.postMessage({command:'openLocal', path:'\${f.path}', folder:true})">Vai alla cartella</span>
+                            \${isFile ? \`
+                                <span class="text-link" onclick="vscode.postMessage({command:'openDiff', path:'\${f.path}', rev:'\${commit.rev}'})">Diff</span>
+                                <span class="text-link" onclick="vscode.postMessage({command:'openLocal', path:'\${f.path}', folder:false})">Vai al file</span>
+                            \` : \`
+                                <span class="text-link" onclick="vscode.postMessage({command:'openLocal', path:'\${f.path}', folder:true})">Vai alla cartella</span>
+                            \`}
                         </div>
-                    </div>\`).join('');
+                    </div>\`;
+                }).join('');
                 document.getElementById('det-files').innerHTML = '<strong>File:</strong>' + filesHtml;
             }
 
@@ -279,6 +290,11 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 resizer.style.display = 'none';
                 document.querySelectorAll('.commit-row').forEach(r => r.classList.remove('selected'));
             }
+
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                const val = e.target.value.toLowerCase();
+                renderHistory(allCommits.filter(c => c.author.toLowerCase().includes(val) || c.msg.toLowerCase().includes(val)));
+            });
         </script>
     </body>
     </html>`;
