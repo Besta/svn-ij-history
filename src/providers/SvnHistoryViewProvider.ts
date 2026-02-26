@@ -4,12 +4,22 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 
+/**
+ * Provider for the SVN History Webview View.
+ * Handles SVN data fetching, webview messaging, and local file interactions.
+ */
 export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
+    /** Unique identifier for the view as defined in package.json */
     public static readonly viewType = 'svn-ij-history.view';
+    
     private _view?: vscode.WebviewView;
     private _svnService: SvnService;
     private _currentLimit = 50;
 
+    /**
+     * @param _extensionUri The URI of the directory containing the extension.
+     * @param workspaceRoot The absolute path to the current workspace root.
+     */
     constructor(
         private readonly _extensionUri: vscode.Uri,
         workspaceRoot: string
@@ -17,12 +27,21 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
         this._svnService = new SvnService(workspaceRoot);
     }
 
+    /**
+     * Resets the view to the initial state and reloads the history.
+     */
     public async refresh() {
         this._currentLimit = 50;
+        // Notify webview to clear the search bar UI
         this._view?.webview.postMessage({ command: 'clearSearch' });
         await this.loadHistory();
     }
 
+    /**
+     * Generates a diff between the selected revision and its predecessor.
+     * @param repoPath Relative path of the file in the repository.
+     * @param rev The revision number to compare.
+     */
     private async showDiff(repoPath: string, rev: string) {
         const prevRev = (parseInt(rev) - 1).toString();
         const fileName = repoPath.split('/').pop() || "file";
@@ -48,14 +67,20 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 `${fileName} (r${prevRev} ↔ r${rev})`
             );
         } catch (err: any) {
-            vscode.window.showErrorMessage("Errore Diff: " + err.message);
+            vscode.window.showErrorMessage("Diff Error: " + err.message);
         }
     }
 
+    /**
+     * Attempts to open the file or folder in the local workspace.
+     * @param repoPath Relative path from the SVN repository.
+     * @param isFolderRequested Whether to reveal in explorer instead of opening a document.
+     */
     private async openLocalFile(repoPath: string, isFolderRequested: boolean = false) {
         const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
         if (!workspacePath) return;
 
+        // Strip trunk/branches/tags prefix to find local relative path
         const cleanRelPath = repoPath.replace(/^\/(trunk|branches\/[^/]+|tags\/[^/]+)\//, '');
         const absolutePath = path.join(workspacePath, cleanRelPath);
 
@@ -67,6 +92,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 await vscode.window.showTextDocument(uri);
             }
         } else {
+            // Fallback: search for the filename if path doesn't match perfectly
             const targetName = repoPath.split('/').pop();
             if (!targetName) return;
             const files = await vscode.workspace.findFiles(`**/${targetName}`, '**/node_modules/**', 1);
@@ -78,11 +104,14 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                     await vscode.window.showTextDocument(files[0]);
                 }
             } else {
-                vscode.window.showErrorMessage("Impossibile trovare il file nel workspace locale.");
+                vscode.window.showErrorMessage("Could not find the file in the local workspace.");
             }
         }
     }
 
+    /**
+     * VS Code entry point for initializing the Webview.
+     */
     public resolveWebviewView(webviewView: vscode.WebviewView) {
         this._view = webviewView;
 
@@ -114,21 +143,29 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
         this.loadHistory();
     }
 
+    /**
+     * Fetches SVN logs and pushes them to the Webview.
+     */
     private async loadHistory() {
         if (!this._view) return;
         try {
             const commits = await this._svnService.getHistory(this._currentLimit);
             this._view.webview.postMessage({ command: 'updateCommits', commits });
         } catch (err: any) {
-            vscode.window.showErrorMessage("Errore SVN: " + err.message);
+            vscode.window.showErrorMessage("SVN Error: " + err.message);
         }
     }
 
+    /**
+     * Generates the HTML content for the Webview.
+     * @param webview The webview instance.
+     * @returns Full HTML string.
+     */
     private _getHtmlForWebview(webview: vscode.Webview) {
         const toolkitUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode', 'webview-ui-toolkit', 'dist', 'toolkit.min.js'));
 
         return `<!DOCTYPE html>
-    <html lang="it">
+    <html lang="en">
     <head>
         <meta charset="UTF-8">
         <script type="module" src="${toolkitUri}"></script>
@@ -174,23 +211,23 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
     </head>
     <body>
         <div id="search-bar">
-            <vscode-text-field id="search-input" placeholder="Filtra per messaggio, autore o revisione..." style="width:100%"></vscode-text-field>
+            <vscode-text-field id="search-input" placeholder="Filter by message, author, or revision..." style="width:100%"></vscode-text-field>
         </div>
         <div id="status-bar">
-            Caricamento in corso...
+            Loading history...
         </div>
         
         <div id="main-content">
             <div id="commit-list">
                 <div id="list-container"></div>
                 <div id="load-more-container">
-                    <button id="btn-load-more" class="load-more-btn">Carica altri 50 commit...</button>
+                    <button id="btn-load-more" class="load-more-btn">Load 50 more commits...</button>
                 </div>
             </div>
             <div id="resizer"></div>
             <div id="details-panel">
                 <div id="details-header">
-                    <span style="font-weight:bold">Dettagli</span>
+                    <span style="font-weight:bold">Details</span>
                     <span class="close-btn" onclick="closeDetails()">×</span>
                 </div>
                 <div id="detail-body" style="padding:12px; overflow-y:auto; flex:1">
@@ -214,7 +251,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
             let selectedRev = null;
             let isResizing = false;
 
-            // Ripristino stato
+            // State Restoration
             const previousState = vscode.getState();
             if (previousState) {
                 allCommits = previousState.commits || [];
@@ -224,7 +261,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
             }
 
             btnLoadMore.onclick = () => {
-                btnLoadMore.innerText = 'Caricamento in corso...';
+                btnLoadMore.innerText = 'Loading...';
                 vscode.postMessage({ command: 'loadMore' });
             };
 
@@ -232,7 +269,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 const data = event.data;
                 if (data.command === 'updateCommits') {
                     allCommits = data.commits;
-                    btnLoadMore.innerText = 'Carica altri 50 commit...';
+                    btnLoadMore.innerText = 'Load 50 more commits...';
                     renderHistory();
                     updateState();
                 } else if (data.command === 'clearSearch') {
@@ -261,13 +298,13 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                     c.rev.toString().includes(filter)
                 );
 
-                // Aggiornamento Status Bar
+                // Status Bar Update
                 if (allCommits.length === 0) {
-                    statusBar.innerText = "Nessun commit caricato.";
+                    statusBar.innerText = "No commits loaded.";
                 } else if (filter) {
-                    statusBar.innerText = \`Mostrando \${filtered.length} di \${allCommits.length} commit caricati\`;
+                    statusBar.innerText = \`Showing \${filtered.length} of \${allCommits.length} loaded commits\`;
                 } else {
-                    statusBar.innerText = \`Totale commit caricati: \${allCommits.length}\`;
+                    statusBar.innerText = \`Total loaded commits: \${allCommits.length}\`;
                 }
 
                 const groups = new Map();
@@ -309,7 +346,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 selectedRev = commit.rev;
                 if (!isRestoring) updateState();
 
-                document.getElementById('det-rev').innerText = 'Revisione ' + commit.rev;
+                document.getElementById('det-rev').innerText = 'Revision ' + commit.rev;
                 document.getElementById('det-msg').innerText = commit.msg;
 
                 const filesHtml = commit.files.map(f => {
@@ -321,14 +358,14 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                         <div class="file-links">
                             \${isFile ? \`
                                 <span class="text-link" onclick="vscode.postMessage({command:'openDiff', path:'\${f.path}', rev:'\${commit.rev}'})">Diff</span>
-                                <span class="text-link" onclick="vscode.postMessage({command:'openLocal', path:'\${f.path}', folder:false})">Vai al file</span>
+                                <span class="text-link" onclick="vscode.postMessage({command:'openLocal', path:'\${f.path}', folder:false})">Open File</span>
                             \` : \`
-                                <span class="text-link" onclick="vscode.postMessage({command:'openLocal', path:'\${f.path}', folder:true})">Vai alla cartella</span>
+                                <span class="text-link" onclick="vscode.postMessage({command:'openLocal', path:'\${f.path}', folder:true})">Open Folder</span>
                             \`}
                         </div>
                     </div>\`;
                 }).join('');
-                document.getElementById('det-files').innerHTML = '<strong>File:</strong>' + filesHtml;
+                document.getElementById('det-files').innerHTML = '<strong>Changed Files:</strong>' + filesHtml;
             }
 
             window.closeDetails = function() {
@@ -344,7 +381,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 updateState();
             });
 
-            // Logica Resizer
+            // Resizer Logic
             resizer.addEventListener('mousedown', () => {
                 isResizing = true;
                 document.addEventListener('mousemove', handleMouseMove);

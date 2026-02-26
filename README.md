@@ -1,37 +1,33 @@
-# SVN IJ History for VS Code
+# SVN IJ History
 
-Porta la potenza e la chiarezza della visualizzazione cronologia di IntelliJ direttamente dentro Visual Studio Code. Questa estensione ti permette di navigare nei commit SVN con un'interfaccia fluida, raggruppata per date e con un pannello dettagli contestuale.
+Bring the powerful **IntelliJ-style SVN History** experience to Visual Studio Code. This extension provides a dedicated side-bar view to navigate Subversion logs with a professional timeline and a side-by-side detail panel.
 
 
 
-## 🚀 Caratteristiche principali
+## Features
 
-* **Timeline Intelligente**: Commit raggruppati automaticamente per "Oggi", "Ieri", "Settimana scorsa", ecc.
-* **Filtro Istantaneo**: Cerca rapidamente tra i commit per messaggio, autore o numero di revisione.
-* **Pannello Dettagli Side-by-Side**: Visualizza i file modificati in un pannello laterale ridimensionabile senza perdere il segno nella lista.
-* **Integrazione Nativa Diff**: Confronta le versioni dei file con un solo click utilizzando lo strumento di diff integrato di VS Code.
-* **Navigazione Locale**: Salta direttamente al file nel tuo workspace partendo dalla cronologia SVN.
-* **Caricamento Incrementale**: Gestisci repository enormi caricando 50 commit alla volta per massime performance.
+* **Smart Timeline**: Commits are automatically grouped by date (Today, Yesterday, Last Week, etc.).
+* **Side-by-Side Details**: Inspect commit messages and changed files in a resizable side panel without losing your scroll position.
+* **Integrated Diff**: Open the native VS Code diff editor with a single click to compare revisions.
+* **Local File Navigation**: Jump directly from a commit to the file in your local workspace.
+* **Fast Search**: Filter through hundreds of commits by author, message, or revision number in real-time.
+* **Performance First**: Uses incremental loading (50 commits at a time) to handle large repositories smoothly.
 
-## 🛠 Come si usa
+## Requirements
 
-1.  Apri la **barra laterale** o il **pannello inferiore** (a seconda di dove hai configurato la vista).
-2.  Clicca sull'icona **SVN History**.
-3.  Usa la **barra di ricerca** per filtrare i commit in tempo reale.
-4.  Clicca su un commit per vedere i dettagli e i file modificati.
-5.  Usa il tasto **Refresh** (↻) nella barra del titolo per cercare nuovi commit e resettare la vista.
+* **SVN CLI**: You must have the `svn` command-line tool installed and available in your system PATH.
+* **SVN Workspace**: The extension activates when it detects a valid SVN checkout in your open workspace.
 
-## ⚙️ Requisiti
+## Extension Settings
 
-* **SVN CLI**: L'estensione richiede che il comando `svn` sia installato e configurato nel tuo `PATH`.
-* **Workspace SVN**: L'estensione si attiva automaticamente se rileva un repository Subversion nel workspace aperto.
+This extension contributes the following settings:
 
-## 📦 Installazione
+* `svn-ij-history.view`: Provides the custom history view in the Source Control or Explorer side bar.
 
-1.  Scarica il file `.vsix` dalle release (o installa dal Marketplace).
-2.  In VS Code, vai nel pannello Estensioni (`Ctrl+Shift+X`).
-3.  Clicca sui tre puntini (`...`) in alto a destra e seleziona **Install from VSIX...**.
+## Known Issues
+
+* Initial load might take a few seconds on very large remote repositories over slow connections.
 
 ---
 
-### Sviluppato con ❤️ per chi non vuole rinunciare alla comodità di IntelliJ in VS Code.
+**Developed by Simone Bestazza**
