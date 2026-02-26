@@ -1,71 +1,37 @@
-# svn-ij-history README
+# SVN IJ History for VS Code
 
-This is the README for your extension "svn-ij-history". After writing up a brief description, we recommend including the following sections.
+Porta la potenza e la chiarezza della visualizzazione cronologia di IntelliJ direttamente dentro Visual Studio Code. Questa estensione ti permette di navigare nei commit SVN con un'interfaccia fluida, raggruppata per date e con un pannello dettagli contestuale.
 
-## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
 
-For example if there is an image subfolder under your extension project workspace:
+## 🚀 Caratteristiche principali
 
-\!\[feature X\]\(images/feature-x.png\)
+* **Timeline Intelligente**: Commit raggruppati automaticamente per "Oggi", "Ieri", "Settimana scorsa", ecc.
+* **Filtro Istantaneo**: Cerca rapidamente tra i commit per messaggio, autore o numero di revisione.
+* **Pannello Dettagli Side-by-Side**: Visualizza i file modificati in un pannello laterale ridimensionabile senza perdere il segno nella lista.
+* **Integrazione Nativa Diff**: Confronta le versioni dei file con un solo click utilizzando lo strumento di diff integrato di VS Code.
+* **Navigazione Locale**: Salta direttamente al file nel tuo workspace partendo dalla cronologia SVN.
+* **Caricamento Incrementale**: Gestisci repository enormi caricando 50 commit alla volta per massime performance.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## 🛠 Come si usa
 
-## Requirements
+1.  Apri la **barra laterale** o il **pannello inferiore** (a seconda di dove hai configurato la vista).
+2.  Clicca sull'icona **SVN History**.
+3.  Usa la **barra di ricerca** per filtrare i commit in tempo reale.
+4.  Clicca su un commit per vedere i dettagli e i file modificati.
+5.  Usa il tasto **Refresh** (↻) nella barra del titolo per cercare nuovi commit e resettare la vista.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## ⚙️ Requisiti
 
-## Extension Settings
+* **SVN CLI**: L'estensione richiede che il comando `svn` sia installato e configurato nel tuo `PATH`.
+* **Workspace SVN**: L'estensione si attiva automaticamente se rileva un repository Subversion nel workspace aperto.
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## 📦 Installazione
 
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+1.  Scarica il file `.vsix` dalle release (o installa dal Marketplace).
+2.  In VS Code, vai nel pannello Estensioni (`Ctrl+Shift+X`).
+3.  Clicca sui tre puntini (`...`) in alto a destra e seleziona **Install from VSIX...**.
 
 ---
 
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+### Sviluppato con ❤️ per chi non vuole rinunciare alla comodità di IntelliJ in VS Code.

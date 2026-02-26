@@ -17,6 +17,12 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
         this._svnService = new SvnService(workspaceRoot);
     }
 
+    public async refresh() {
+        this._currentLimit = 50;
+        this._view?.webview.postMessage({ command: 'clearSearch' });
+        await this.loadHistory();
+    }
+
     private async showDiff(repoPath: string, rev: string) {
         const prevRev = (parseInt(rev) - 1).toString();
         const fileName = repoPath.split('/').pop() || "file";
@@ -77,11 +83,6 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-	public async refresh() {
-		this._currentLimit = 50;
-		await this.loadHistory();
-	}
-
     public resolveWebviewView(webviewView: vscode.WebviewView) {
         this._view = webviewView;
 
@@ -94,6 +95,9 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.command) {
+                case 'refresh':
+                    await this.refresh();
+                    break;
                 case 'loadMore':
                     this._currentLimit += 50;
                     await this.loadHistory();
@@ -130,30 +134,18 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
         <script type="module" src="${toolkitUri}"></script>
         <style>
             body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: var(--vscode-font-family); color: var(--vscode-foreground); overflow: hidden; }
-            #search-bar { padding: 8px 12px; border-bottom: 1px solid var(--vscode-panel-border); display: flex; gap: 8px; background: var(--vscode-panel-background); z-index: 30; }
+            #search-bar { padding: 8px 12px 4px 12px; background: var(--vscode-panel-background); }
+            #status-bar { padding: 0 12px 8px 12px; font-size: 0.75em; opacity: 0.7; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-panel-background); }
             #main-content { display: flex; flex: 1; overflow: hidden; position: relative; width: 100%; }
-            #commit-list { flex: 1; min-width: 0; overflow-y: auto; background: var(--vscode-sideBar-background); }
+            #commit-list { flex: 1; min-width: 0; overflow-y: auto; background: var(--vscode-sideBar-background); display: flex; flex-direction: column; }
+            #list-container { flex: 1; }
             #resizer { width: 5px; cursor: col-resize; background: var(--vscode-panel-border); display: none; z-index: 100; flex-shrink: 0; }
             #resizer:hover { background: var(--vscode-focusBorder); }
             #details-panel { width: 50%; min-width: 200px; display: none; flex-direction: column; background: var(--vscode-editor-background); flex-shrink: 0; }
             #details-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-panel-sectionHeader-background); }
             
-            summary { 
-                padding: 8px 12px; 
-                cursor: pointer; 
-                font-weight: bold; 
-                font-size: 0.85em; 
-                background-color: var(--vscode-sideBarSectionHeader-background, var(--vscode-editor-background)); 
-                color: var(--vscode-sideBarSectionHeader-foreground);
-                position: sticky; 
-                top: 0; 
-                z-index: 20; 
-                border-bottom: 1px solid var(--vscode-panel-border);
-                outline: none;
-                user-select: none;
-            }
+            summary { padding: 8px 12px; cursor: pointer; font-weight: bold; font-size: 0.85em; background-color: var(--vscode-sideBarSectionHeader-background, var(--vscode-editor-background)); position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--vscode-panel-border); outline: none; user-select: none; }
             summary:hover { filter: brightness(1.1); }
-            details { background-color: var(--vscode-sideBar-background); }
 
             .commit-row { display: flex; align-items: center; padding: 4px 12px; gap: 12px; cursor: pointer; border-bottom: 1px solid var(--vscode-panel-border); font-size: 0.85em; white-space: nowrap; overflow: hidden; }
             .commit-row:hover { background: var(--vscode-list-hoverBackground); }
@@ -175,18 +167,26 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
             .close-btn { cursor: pointer; opacity: 0.7; font-size: 1.2em; }
             .close-btn:hover { opacity: 1; }
 
-            #load-more-container { padding: 15px; display: flex; justify-content: center; }
-            .load-more-btn { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; padding: 6px 12px; cursor: pointer; font-size: 0.9em; border-radius: 2px; }
+            #load-more-container { padding: 15px; display: none; justify-content: center; }
+            .load-more-btn { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; padding: 6px 12px; cursor: pointer; font-size: 0.9em; border-radius: 2px; width: 100%; }
             .load-more-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
         </style>
     </head>
     <body>
         <div id="search-bar">
-            <vscode-text-field id="search-input" placeholder="Filtra..." style="flex:1"></vscode-text-field>
+            <vscode-text-field id="search-input" placeholder="Filtra per messaggio, autore o revisione..." style="width:100%"></vscode-text-field>
+        </div>
+        <div id="status-bar">
+            Caricamento in corso...
         </div>
         
         <div id="main-content">
-            <div id="commit-list"><div id="list-container"></div></div>
+            <div id="commit-list">
+                <div id="list-container"></div>
+                <div id="load-more-container">
+                    <button id="btn-load-more" class="load-more-btn">Carica altri 50 commit...</button>
+                </div>
+            </div>
             <div id="resizer"></div>
             <div id="details-panel">
                 <div id="details-header">
@@ -203,64 +203,75 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
 
         <script>
             const vscode = acquireVsCodeApi();
-            
-            // Stato persistente
-            const previousState = vscode.getState();
-            let allCommits = previousState ? previousState.commits : [];
-            let selectedRev = previousState ? previousState.selectedRev : null;
-
+            const searchInput = document.getElementById('search-input');
+            const statusBar = document.getElementById('status-bar');
+            const loadMoreContainer = document.getElementById('load-more-container');
+            const btnLoadMore = document.getElementById('btn-load-more');
             const detailsPanel = document.getElementById('details-panel');
             const resizer = document.getElementById('resizer');
+            
+            let allCommits = [];
+            let selectedRev = null;
             let isResizing = false;
 
-            // Render iniziale se abbiamo uno stato salvato
-            if (allCommits && allCommits.length > 0) {
-                renderHistory(allCommits);
-                if (selectedRev) {
-                    const commit = allCommits.find(c => c.rev === selectedRev);
-                    if (commit) {
-                        setTimeout(() => {
-                            const rows = document.querySelectorAll('.commit-row');
-                            const targetRow = Array.from(rows).find(r => r.querySelector('.c-rev').innerText === 'r' + selectedRev);
-                            if (targetRow) showDetails(commit, targetRow, true);
-                        }, 100);
-                    }
-                }
+            // Ripristino stato
+            const previousState = vscode.getState();
+            if (previousState) {
+                allCommits = previousState.commits || [];
+                selectedRev = previousState.selectedRev || null;
+                searchInput.value = previousState.searchValue || '';
+                if (allCommits.length > 0) renderHistory();
             }
 
-            // GESTIONE RESIZER
-            resizer.addEventListener('mousedown', (e) => {
-                isResizing = true;
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', () => {
-                    isResizing = false;
-                    document.removeEventListener('mousemove', handleMouseMove);
-                });
-            });
+            btnLoadMore.onclick = () => {
+                btnLoadMore.innerText = 'Caricamento in corso...';
+                vscode.postMessage({ command: 'loadMore' });
+            };
 
-            function handleMouseMove(e) {
-                if (!isResizing) return;
-                const offsetRight = document.body.offsetWidth - e.clientX;
-                if (offsetRight > 150 && offsetRight < (document.body.offsetWidth * 0.8)) {
-                    detailsPanel.style.width = offsetRight + 'px';
-                }
-            }
-
-            // MESSAGGI
             window.addEventListener('message', event => {
-                if (event.data.command === 'updateCommits') {
-                    allCommits = event.data.commits;
-                    vscode.setState({ commits: allCommits, selectedRev: selectedRev });
-                    renderHistory(allCommits);
+                const data = event.data;
+                if (data.command === 'updateCommits') {
+                    allCommits = data.commits;
+                    btnLoadMore.innerText = 'Carica altri 50 commit...';
+                    renderHistory();
+                    updateState();
+                } else if (data.command === 'clearSearch') {
+                    searchInput.value = '';
+                    updateState();
+                    renderHistory();
                 }
             });
 
-            function renderHistory(commits) {
+            function updateState() {
+                vscode.setState({ 
+                    commits: allCommits, 
+                    selectedRev: selectedRev,
+                    searchValue: searchInput.value 
+                });
+            }
+
+            function renderHistory() {
                 const container = document.getElementById('list-container');
                 container.innerHTML = '';
-                const groups = new Map();
                 
-                commits.forEach(c => {
+                const filter = searchInput.value.toLowerCase();
+                const filtered = allCommits.filter(c => 
+                    c.author.toLowerCase().includes(filter) || 
+                    c.msg.toLowerCase().includes(filter) ||
+                    c.rev.toString().includes(filter)
+                );
+
+                // Aggiornamento Status Bar
+                if (allCommits.length === 0) {
+                    statusBar.innerText = "Nessun commit caricato.";
+                } else if (filter) {
+                    statusBar.innerText = \`Mostrando \${filtered.length} di \${allCommits.length} commit caricati\`;
+                } else {
+                    statusBar.innerText = \`Totale commit caricati: \${allCommits.length}\`;
+                }
+
+                const groups = new Map();
+                filtered.forEach(c => {
                     if (!groups.has(c.groupLabel)) groups.set(c.groupLabel, []);
                     groups.get(c.groupLabel).push(c);
                 });
@@ -286,15 +297,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                     container.appendChild(details);
                 });
 
-                if (commits.length > 0) {
-                    const loadMoreDiv = document.createElement('div');
-                    loadMoreDiv.id = 'load-more-container';
-                    loadMoreDiv.innerHTML = \`
-                        <button class="load-more-btn" onclick="this.innerText='Caricamento...'; vscode.postMessage({command:'loadMore'})">
-                            Carica altri 50 commit...
-                        </button>\`;
-                    container.appendChild(loadMoreDiv);
-                }
+                loadMoreContainer.style.display = allCommits.length > 0 ? 'flex' : 'none';
             }
 
             function showDetails(commit, el, isRestoring = false) {
@@ -304,9 +307,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 resizer.style.display = 'block';
 
                 selectedRev = commit.rev;
-                if (!isRestoring) {
-                    vscode.setState({ commits: allCommits, selectedRev: selectedRev });
-                }
+                if (!isRestoring) updateState();
 
                 document.getElementById('det-rev').innerText = 'Revisione ' + commit.rev;
                 document.getElementById('det-msg').innerText = commit.msg;
@@ -335,13 +336,31 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 resizer.style.display = 'none';
                 document.querySelectorAll('.commit-row').forEach(r => r.classList.remove('selected'));
                 selectedRev = null;
-                vscode.setState({ commits: allCommits, selectedRev: null });
+                updateState();
             }
 
-            document.getElementById('search-input').addEventListener('input', (e) => {
-                const val = e.target.value.toLowerCase();
-                renderHistory(allCommits.filter(c => c.author.toLowerCase().includes(val) || c.msg.toLowerCase().includes(val)));
+            searchInput.addEventListener('input', () => {
+                renderHistory();
+                updateState();
             });
+
+            // Logica Resizer
+            resizer.addEventListener('mousedown', () => {
+                isResizing = true;
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', () => {
+                    isResizing = false;
+                    document.removeEventListener('mousemove', handleMouseMove);
+                });
+            });
+
+            function handleMouseMove(e) {
+                if (!isResizing) return;
+                const offsetRight = document.body.offsetWidth - e.clientX;
+                if (offsetRight > 150 && offsetRight < (document.body.offsetWidth * 0.8)) {
+                    detailsPanel.style.width = offsetRight + 'px';
+                }
+            }
         </script>
     </body>
     </html>`;
