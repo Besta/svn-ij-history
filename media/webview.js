@@ -108,16 +108,30 @@
     });
 
     // Event delegation for file action links — avoids inline onclick / eval
+    // Event delegation for file rows and action links
     document.getElementById('det-files')?.addEventListener('click', (e) => {
-        const link = /** @type {HTMLElement | null} */ (
-            /** @type {HTMLElement} */ (e.target).closest('[data-command]')
-        );
-        if (!link?.dataset) { return; }
-        const cmd = link.dataset.command;
-        if (cmd === 'openDiff') {
-            vscode.postMessage({ command: 'openDiff', path: link.dataset.path, rev: link.dataset.rev });
-        } else if (cmd === 'openLocal') {
-            vscode.postMessage({ command: 'openLocal', path: link.dataset.path, folder: link.dataset.folder === 'true' });
+        const target = /** @type {HTMLElement} */ (e.target);
+
+        // Check if an action button was clicked
+        const actionBtn = /** @type {HTMLElement | null} */ (target.closest('[data-command]'));
+        if (actionBtn?.dataset) {
+            const cmd = actionBtn.dataset.command;
+            if (cmd === 'openDiff') {
+                vscode.postMessage({ command: 'openDiff', path: actionBtn.dataset.path, rev: actionBtn.dataset.rev });
+            } else if (cmd === 'openLocal') {
+                vscode.postMessage({ command: 'openLocal', path: actionBtn.dataset.path, folder: actionBtn.dataset.folder === 'true' });
+            }
+            return;
+        }
+
+        // Check if the file info area was clicked -> trigger diff
+        const fileInfo = /** @type {HTMLElement | null} */ (target.closest('.file-info'));
+        if (fileInfo?.dataset) {
+            vscode.postMessage({
+                command: 'openDiff',
+                path: fileInfo.dataset.path,
+                rev: fileInfo.dataset.rev
+            });
         }
     });
 
@@ -274,39 +288,100 @@
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
 
-            // File path with action badge
-            const filePath = document.createElement('span');
-            filePath.className = 'file-path';
-            const actionTag = document.createElement('span');
-            // f.action is always A/M/D/R from SVN — safe for className
-            actionTag.className = 'action-tag ' + f.action;
-            actionTag.textContent = f.action;
-            filePath.appendChild(actionTag);
-            filePath.appendChild(document.createTextNode(f.path));
+            // Split path into filename and directory
+            const lastSlashIndex = f.path.lastIndexOf('/');
+            const fileName = lastSlashIndex === -1 ? f.path : f.path.substring(lastSlashIndex + 1);
+            const dirPath = lastSlashIndex === -1 ? '' : f.path.substring(0, lastSlashIndex);
 
-            // Action links via dataset — handled by the delegation listener above
-            const fileLinks = document.createElement('div');
-            fileLinks.className = 'file-links';
+            // File Info Area (clickable for diff)
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'file-info';
+            fileInfo.dataset.command = 'openDiff';
+            fileInfo.dataset.path = f.path;
+            fileInfo.dataset.rev = commit.rev;
 
-            // Distinguish file vs directory: files have a dot in the basename
-            // and don't end with a trailing slash.
-            const baseName = f.path.split('/').pop() || '';
-            const isFile = !f.path.endsWith('/') && baseName.includes('.');
+            // File type icon (simple mapping)
+            const icon = document.createElement('span');
+            icon.className = 'file-icon';
+            icon.innerHTML = getFileIcon(fileName);
+            fileInfo.appendChild(icon);
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'file-name';
+            nameSpan.textContent = fileName;
+            fileInfo.appendChild(nameSpan);
+
+            if (dirPath) {
+                const dirSpan = document.createElement('span');
+                dirSpan.className = 'file-dir';
+                dirSpan.textContent = dirPath;
+                fileInfo.appendChild(dirSpan);
+            }
+
+            // Action links (hover)
+            const fileActions = document.createElement('div');
+            fileActions.className = 'file-actions';
+
+            const isFile = !f.path.endsWith('/') && fileName.includes('.');
 
             if (isFile) {
-                fileLinks.append(
-                    makeLink('Diff', { command: 'openDiff', path: f.path, rev: commit.rev }),
-                    makeLink('Open File', { command: 'openLocal', path: f.path, folder: 'false' })
+                fileActions.append(
+                    makeIconButton('Open File', 'openLocal', { path: f.path, folder: 'false' })
                 );
             } else {
-                fileLinks.append(
-                    makeLink('Open Folder', { command: 'openLocal', path: f.path, folder: 'true' })
+                fileActions.append(
+                    makeIconButton('Open Folder', 'openLocal', { path: f.path, folder: 'true' })
                 );
             }
 
-            fileItem.append(filePath, fileLinks);
+            // SVN Action Tag (A, M, D)
+            const actionTag = document.createElement('span');
+            actionTag.className = 'action-tag ' + f.action;
+            actionTag.textContent = f.action;
+
+            fileItem.append(fileInfo, fileActions, actionTag);
             filesContainer.appendChild(fileItem);
         });
+    }
+
+    /**
+     * Returns a simple SVG or icon-like element based on file extension.
+     * @param {string} fileName 
+     */
+    function getFileIcon(fileName) {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        // SVGs for common types (simplified)
+        if (ext === 'js' || ext === 'mjs' || ext === 'ts') {
+            return '<span style="color:#f1e05a">JS</span>';
+        } else if (ext === 'css') {
+            return '<span style="color:#563d7c">#</span>';
+        } else if (ext === 'html') {
+            return '<span style="color:#e34c26"><></span>';
+        } else if (ext === 'json') {
+            return '<span style="color:#f1e05a">{}</span>';
+        } else if (ext === 'md') {
+            return '<span style="color:#083fa1">M↓</span>';
+        }
+        return '<span style="opacity:0.5">📄</span>';
+    }
+
+    /**
+     * Creates an icon button for file actions.
+     * @param {string} title 
+     * @param {string} command 
+     * @param {Record<string, string>} dataset 
+     */
+    function makeIconButton(title, command, dataset) {
+        const btn = document.createElement('span');
+        btn.className = 'icon-button';
+        btn.title = title;
+        Object.assign(btn.dataset, dataset, { command });
+
+        // Use standard Codicon class
+        const icon = document.createElement('i');
+        icon.className = 'codicon codicon-go-to-file';
+        btn.appendChild(icon);
+        return btn;
     }
 
     function closeDetails() {

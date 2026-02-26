@@ -217,38 +217,87 @@ summary:hover {
 }
 
 .file-item {
-    padding: 6px 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
-    font-size: 0.85em;
-}
-
-.file-path {
-    display: block;
-    margin-bottom: 4px;
-    font-family: var(--vscode-editor-font-family);
-    word-break: break-all;
-    white-space: normal;
-}
-
-.file-links {
     display: flex;
-    gap: 12px;
-    font-size: 0.9em;
-}
-
-.text-link {
-    color: var(--vscode-textLink-foreground);
+    align-items: center;
+    padding: 3px 12px;
+    font-size: 13px;
     cursor: pointer;
-    text-decoration: none;
+    gap: 8px;
+    height: 24px;
 }
 
-.text-link:hover {
-    text-decoration: underline;
+.file-item:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    gap: 6px;
+}
+
+.file-icon {
+    width: 16px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.file-name {
+    color: var(--vscode-foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-dir {
+    opacity: 0.5;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: 4px;
+}
+
+.file-actions {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.file-item:hover .file-actions {
+    display: flex;
+}
+
+.icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 3px;
+    color: var(--vscode-foreground);
+    opacity: 0.8;
+}
+
+.icon-button:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+    opacity: 1;
+}
+
+.icon-button .codicon {
+    font-size: 16px;
 }
 
 .action-tag {
     font-weight: bold;
-    margin-right: 6px;
+    font-size: 11px;
+    width: 12px;
+    text-align: center;
+    flex-shrink: 0;
 }
 
 .A {

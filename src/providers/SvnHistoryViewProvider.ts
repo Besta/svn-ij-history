@@ -257,12 +257,14 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
         const nonce = getNonce();
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'webview.css'));
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'webview.js'));
+        const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'codicons.css'));
         const htmlPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'webview.html');
 
         return fs.readFileSync(htmlPath.fsPath, 'utf-8')
             .replace(/\{\{nonce\}\}/g, nonce)
             .replace(/\{\{cspSource\}\}/g, webview.cspSource)
             .replace(/\{\{cssUri\}\}/g, cssUri.toString())
-            .replace(/\{\{scriptUri\}\}/g, scriptUri.toString());
+            .replace(/\{\{scriptUri\}\}/g, scriptUri.toString())
+            .replace(/\{\{codiconsUri\}\}/g, codiconsUri.toString());
     }
 }
