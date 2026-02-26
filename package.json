@@ -4,6 +4,14 @@
   "description": "Visualizzatore cronologia SVN ispirato a IntelliJ con ricerca e diff rapido.",
   "version": "1.0.0",
   "publisher": "Simone Bestazza",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Besta/svn-ij-history.git"
+  },
+  "homepage": "https://github.com/Besta/svn-ij-history#readme",
+  "bugs": {
+    "url": "https://github.com/Besta/svn-ij-history/issues"
+  },
   "engines": {
     "vscode": "^1.75.0"
   },
