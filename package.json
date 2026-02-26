@@ -3,7 +3,7 @@
   "displayName": "SVN IntelliJ-style History",
   "description": "SVN history viewer inspired by IntelliJ with advanced search, timeline grouping, and quick diff.",
   "version": "1.0.2",
-  "publisher": "simone-bestazza",
+  "publisher": "SimoneBestazza",
   "license": "MIT",
   "repository": {
     "type": "git",
