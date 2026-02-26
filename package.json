@@ -12,10 +12,29 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "svn-ij-history-container",
+          "title": "SVN History",
+          "icon": "$(history)"
+        }
+      ]
+    },
+    "views": {
+      "svn-ij-history-container": [
+        {
+          "type": "webview",
+          "id": "svn-ij-history.view",
+          "name": "Commits"
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "svn-ij-history.helloWorld",
-        "title": "Hello World"
+        "command": "svn-ij-history.refresh",
+        "title": "Refresh SVN History",
+        "icon": "$(refresh)"
       }
     ]
   },
