@@ -15,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
         // Comando di refresh manuale
         context.subscriptions.push(
             vscode.commands.registerCommand('svn-ij-history.refresh', () => {
-                // Il refresh viene gestito internamente dal provider
+                provider.refresh();
             })
         );
     } else {
