@@ -3,7 +3,8 @@
   "displayName": "SVN IntelliJ-style History",
   "description": "Visualizzatore cronologia SVN ispirato a IntelliJ con ricerca e diff rapido.",
   "version": "1.0.0",
-  "publisher": "Simone Bestazza",
+  "publisher": "SimoneBestazza",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/Besta/svn-ij-history.git"
@@ -13,7 +14,7 @@
     "url": "https://github.com/Besta/svn-ij-history/issues"
   },
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.109.0"
   },
   "categories": [
     "SCM Providers",
