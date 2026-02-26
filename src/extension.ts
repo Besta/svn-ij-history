@@ -8,30 +8,42 @@ import { SvnHistoryViewProvider } from './providers/SvnHistoryViewProvider';
  * * @param context The extension context provided by VS Code.
  */
 export function activate(context: vscode.ExtensionContext) {
-    // Attempt to get the first workspace folder path
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 
     if (workspaceRoot) {
-        // Initialize the Webview provider with the workspace root and extension URI
         const provider = new SvnHistoryViewProvider(context.extensionUri, workspaceRoot);
         
-        // Register the Webview View Provider
-        // This links the ID in package.json to the logic in SvnHistoryViewProvider
         context.subscriptions.push(
             vscode.window.registerWebviewViewProvider(SvnHistoryViewProvider.viewType, provider)
         );
 
-        /**
-         * Register the manual refresh command.
-         * This can be triggered from the command palette or UI buttons.
-         */
         context.subscriptions.push(
             vscode.commands.registerCommand('svn-ij-history.refresh', () => {
                 provider.refresh();
             })
         );
+
+        /**
+         * Command to show a QuickPick with unique authors and filter the view.
+         */
+        context.subscriptions.push(
+            vscode.commands.registerCommand('svn-ij-history.filterUser', async () => {
+                const users = await provider.fetchRecentAuthors(200);
+                if (users.length === 0) {
+                    vscode.window.showInformationMessage("No authors found in recent history.");
+                    return;
+                }
+
+                const selected = await vscode.window.showQuickPick(users, {
+                    placeHolder: 'Select an author from recent 200 commits'
+                });
+
+                if (selected) {
+                    provider.setSearchValue(selected);
+                }
+            })
+        );
     } else {
-        // Fallback for when no folder is open in VS Code
         vscode.window.showErrorMessage("Please open a workspace folder to use SVN History.");
     }
 }

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.2] - 2026-02-26
 
 ### Added
+- **User Filtering**: Added a new "Filter by User" button in the view title bar using the `$(account)` icon.
+- **Author Autocomplete**: Integrated with VS Code's native QuickPick to show unique authors from the last 200 commits for quick search pre-filling.
 - **Localization**: Fully translated the user interface, logs, and documentation to English for global availability.
 - **Code Quality**: Implemented JSDoc documentation across all main classes (`SvnService`, `SvnHistoryViewProvider`, `DateUtils`) to improve maintainability.
 

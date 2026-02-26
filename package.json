@@ -51,6 +51,11 @@
     },
     "commands": [
       {
+        "command": "svn-ij-history.filterUser",
+        "title": "Filter by User",
+        "icon": "$(account)"
+      },
+      {
         "command": "svn-ij-history.refresh",
         "title": "Refresh SVN History",
         "icon": "$(refresh)"
@@ -58,6 +63,11 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "svn-ij-history.filterUser",
+          "when": "view == svn-ij-history.view",
+          "group": "navigation@1" 
+        },
         {
           "command": "svn-ij-history.refresh",
           "when": "view == svn-ij-history.view",

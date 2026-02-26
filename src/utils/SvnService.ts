@@ -70,6 +70,30 @@ export class SvnService {
     }
 
     /**
+     * Fetches all unique authors from the SVN history.
+     * @returns A promise resolving to a sorted array of unique usernames.
+     */
+    public async getAllAuthors(): Promise<string[]> {
+        try {
+            // Eseguiamo un log senza --verbose per ottenere solo i metadati base (più veloce)
+            const { stdout } = await execAsync(`svn log --xml`, { cwd: this.workspaceRoot });
+            const authors = new Set<string>();
+            const authorRegex = /<author>(.*?)<\/author>/g;
+            
+            let match;
+            while ((match = authorRegex.exec(stdout)) !== null) {
+                if (match[1]) {
+                    authors.add(match[1]);
+                }
+            }
+            return Array.from(authors).sort();
+        } catch (error) {
+            console.error('Error fetching SVN authors:', error);
+            return [];
+        }
+    }
+
+    /**
      * Manually parses the SVN XML output into SvnCommit objects.
      * Note: Manual regex parsing is used here for performance and to avoid heavy XML dependencies.
      * @param xml The raw XML string from SVN CLI.

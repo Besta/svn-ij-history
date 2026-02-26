@@ -15,6 +15,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private _svnService: SvnService;
     private _currentLimit = 50;
+    private _lastCommits: SvnCommit[] = [];
 
     /**
      * @param _extensionUri The URI of the directory containing the extension.
@@ -32,9 +33,31 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
      */
     public async refresh() {
         this._currentLimit = 50;
-        // Notify webview to clear the search bar UI
         this._view?.webview.postMessage({ command: 'clearSearch' });
         await this.loadHistory();
+    }
+
+    /**
+     * Fetches unique authors from a specific number of recent commits.
+     * @param limit The number of recent commits to analyze for authors.
+     * @returns A sorted array of unique author names.
+     */
+    public async fetchRecentAuthors(limit: number): Promise<string[]> {
+        try {
+            const recentCommits = await this._svnService.getHistory(limit);
+            const authors = new Set(recentCommits.map(c => c.author));
+            return Array.from(authors).sort();
+        } catch (err) {
+            return [];
+        }
+    }
+
+    /**
+     * Sends a message to the webview to set the search input value.
+     * @param value The string to set in the search bar.
+     */
+    public setSearchValue(value: string) {
+        this._view?.webview.postMessage({ command: 'setSearch', value });
     }
 
     /**
@@ -80,7 +103,6 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
         const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
         if (!workspacePath) return;
 
-        // Strip trunk/branches/tags prefix to find local relative path
         const cleanRelPath = repoPath.replace(/^\/(trunk|branches\/[^/]+|tags\/[^/]+)\//, '');
         const absolutePath = path.join(workspacePath, cleanRelPath);
 
@@ -92,7 +114,6 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 await vscode.window.showTextDocument(uri);
             }
         } else {
-            // Fallback: search for the filename if path doesn't match perfectly
             const targetName = repoPath.split('/').pop();
             if (!targetName) return;
             const files = await vscode.workspace.findFiles(`**/${targetName}`, '**/node_modules/**', 1);
@@ -111,6 +132,7 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
 
     /**
      * VS Code entry point for initializing the Webview.
+     * @param webviewView The webview view instance to resolve.
      */
     public resolveWebviewView(webviewView: vscode.WebviewView) {
         this._view = webviewView;
@@ -149,8 +171,8 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
     private async loadHistory() {
         if (!this._view) return;
         try {
-            const commits = await this._svnService.getHistory(this._currentLimit);
-            this._view.webview.postMessage({ command: 'updateCommits', commits });
+            this._lastCommits = await this._svnService.getHistory(this._currentLimit);
+            this._view.webview.postMessage({ command: 'updateCommits', commits: this._lastCommits });
         } catch (err: any) {
             vscode.window.showErrorMessage("SVN Error: " + err.message);
         }
@@ -251,7 +273,6 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
             let selectedRev = null;
             let isResizing = false;
 
-            // State Restoration
             const previousState = vscode.getState();
             if (previousState) {
                 allCommits = previousState.commits || [];
@@ -276,6 +297,10 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                     searchInput.value = '';
                     updateState();
                     renderHistory();
+                } else if (data.command === 'setSearch') {
+                    searchInput.value = data.value;
+                    updateState();
+                    renderHistory();
                 }
             });
 
@@ -298,7 +323,6 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                     c.rev.toString().includes(filter)
                 );
 
-                // Status Bar Update
                 if (allCommits.length === 0) {
                     statusBar.innerText = "No commits loaded.";
                 } else if (filter) {
@@ -381,7 +405,6 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 updateState();
             });
 
-            // Resizer Logic
             resizer.addEventListener('mousedown', () => {
                 isResizing = true;
                 document.addEventListener('mousemove', handleMouseMove);
