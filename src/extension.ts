@@ -48,6 +48,21 @@ export function activate(context: vscode.ExtensionContext): void {
         })
     );
 
+    /**
+     * New Command: Show SVN History for a specific file.
+     * Triggered from context menus or command palette.
+     */
+    context.subscriptions.push(
+        vscode.commands.registerCommand('svn-ij-history.showFileHistory', async (fileUri?: vscode.Uri) => {
+            const targetUri = fileUri || vscode.window.activeTextEditor?.document.uri;
+            if (targetUri && targetUri.scheme === 'file') {
+                await provider.showFileHistory(targetUri.fsPath);
+            } else {
+                vscode.window.showErrorMessage('Please select a local file to show history.');
+            }
+        })
+    );
+
     // Clean up temp diff files when the extension is deactivated
     context.subscriptions.push({
         dispose: () => provider.cleanupTmpFiles()

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.4] - 2026-02-26
 
+### Added
+- **File History**: Added "Show SVN History" command to explorer and editor context menus. Allows viewing commits for a specific file with a dedicated filter banner in the webview.
+- **Keyboard Navigation**: Full keyboard support in the webview. Use `Up`/`Down` arrows to navigate commits, `Enter` to select/focus, and `Esc` to close details or blur search. Includes smooth auto-scrolling.
+
 ### Security
 - **XSS Prevention**: All commit data (author, message, file paths) is now injected into the webview via `textContent` and `dataset` attributes instead of `innerHTML`, eliminating cross-site scripting vectors.
 - **Content Security Policy**: Added a per-load CSP `<meta>` tag with a cryptographic nonce, blocking any unauthorized script execution in the webview.

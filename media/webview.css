@@ -63,6 +63,35 @@ body {
     flex: 1;
 }
 
+#file-header {
+    display: none;
+    padding: 8px 12px;
+    background: var(--vscode-editor-background);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+#file-history-title {
+    font-weight: bold;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#btn-clear-file {
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 1.1em;
+    margin-left: 8px;
+}
+
+#btn-clear-file:hover {
+    opacity: 1;
+}
+
 #resizer {
     width: 5px;
     cursor: col-resize;
@@ -215,9 +244,17 @@ summary:hover {
     margin-right: 6px;
 }
 
-.A { color: #73c991; }
-.M { color: #e2c08d; }
-.D { color: #f85149; }
+.A {
+    color: #73c991;
+}
+
+.M {
+    color: #e2c08d;
+}
+
+.D {
+    color: #f85149;
+}
 
 .close-btn {
     cursor: pointer;

@@ -1,19 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; script-src 'nonce-{{nonce}}'; style-src {{cspSource}} 'unsafe-inline';">
+        content="default-src 'none'; script-src 'nonce-{{nonce}}'; style-src {{cspSource}} 'unsafe-inline';">
     <link rel="stylesheet" href="{{cssUri}}">
 </head>
+
 <body>
     <div id="search-bar-container">
-        <input type="text" id="search-input" class="native-input" placeholder="Filter by message, author, or revision...">
+        <input type="text" id="search-input" class="native-input"
+            placeholder="Filter by message, author, or revision...">
     </div>
     <div id="status-bar">Loading history...</div>
 
     <div id="main-content">
         <div id="commit-list">
+            <div id="file-header" style="display:none;">
+                <span id="file-history-title"></span>
+                <span id="btn-clear-file" title="Clear file filter">×</span>
+            </div>
             <div id="list-container"></div>
             <div id="load-more-container">
                 <button id="btn-load-more" class="load-more-btn">Load 50 more commits...</button>
@@ -35,4 +42,5 @@
 
     <script nonce="{{nonce}}" src="{{scriptUri}}"></script>
 </body>
+
 </html>

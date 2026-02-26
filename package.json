@@ -59,6 +59,11 @@
         "command": "svn-ij-history.refresh",
         "title": "Refresh SVN History",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "svn-ij-history.showFileHistory",
+        "title": "Show SVN History",
+        "category": "SVN"
       }
     ],
     "menus": {
@@ -72,6 +77,20 @@
           "command": "svn-ij-history.refresh",
           "when": "view == svn-ij-history.view",
           "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "svn-ij-history.showFileHistory",
+          "when": "resourceScheme == file",
+          "group": "7_modification"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "svn-ij-history.showFileHistory",
+          "when": "resourceScheme == file",
+          "group": "7_modification"
         }
       ]
     }

@@ -54,6 +54,22 @@ export class SvnService {
     }
 
     /**
+     * Fetches the SVN log history for a single file.
+     * Only commits that touched the given file are returned.
+     * @param absoluteFilePath The absolute path of the file on disk.
+     * @param limit Maximum number of log entries to retrieve.
+     * @returns A promise resolving to an array of SvnCommit objects.
+     */
+    public async getFileHistory(absoluteFilePath: string, limit: number = 50): Promise<SvnCommit[]> {
+        const { stdout } = await execFileAsync(
+            'svn',
+            ['log', '--limit', String(limit), '--xml', '--verbose', absoluteFilePath],
+            { cwd: this.workspaceRoot }
+        );
+        return this.parseXml(stdout);
+    }
+
+    /**
      * Retrieves the text content of a specific file at a specific revision.
      * @param repoUrl The full SVN URL of the file.
      * @param rev The revision number.

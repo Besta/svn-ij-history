@@ -38,6 +38,65 @@
     });
 
     document.getElementById('btn-close-details')?.addEventListener('click', closeDetails);
+    document.getElementById('btn-clear-file')?.addEventListener('click', () => {
+        vscode.postMessage({ command: 'clearFileFilter' });
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.target instanceof HTMLInputElement) {
+            if (e.key === 'Escape') {
+                e.target.blur();
+                return;
+            }
+            if (e.key === 'Enter') {
+                e.target.blur();
+                return;
+            }
+            return; // Don't intercept typing in search box
+        }
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectAdjacentCommit(1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectAdjacentCommit(-1);
+        } else if (e.key === 'Escape') {
+            closeDetails();
+        } else if (e.key === 'Enter') {
+            const selected = /** @type {HTMLElement} */ (document.querySelector('.commit-row.selected'));
+            if (selected) {
+                // Details are already shown by the selection logic, but we can ensure focus
+                selected.focus();
+            }
+        }
+    });
+
+    /** @param {number} direction 1 for next, -1 for previous */
+    function selectAdjacentCommit(direction) {
+        const rows = Array.from(document.querySelectorAll('.commit-row'));
+        if (rows.length === 0) { return; }
+
+        let currentIndex = rows.findIndex(r => r.classList.contains('selected'));
+        let nextIndex = currentIndex + direction;
+
+        if (currentIndex === -1) {
+            nextIndex = direction === 1 ? 0 : rows.length - 1;
+        } else if (nextIndex < 0) {
+            nextIndex = 0;
+        } else if (nextIndex >= rows.length) {
+            nextIndex = rows.length - 1;
+        }
+
+        const nextRow = /** @type {HTMLElement} */ (rows[nextIndex]);
+        const rev = nextRow.dataset.rev;
+        const commit = allCommits.find(c => c.rev === rev);
+
+        if (commit) {
+            showDetails(commit, nextRow);
+            nextRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
 
     // Debounced search: avoids re-rendering on every single keystroke
     searchInput.addEventListener('input', () => {
@@ -76,6 +135,19 @@
         if (data.command === 'updateCommits') {
             allCommits = data.commits;
             btnLoadMore.textContent = 'Load 50 more commits...';
+
+            // Show/hide file history banner
+            const fileHeader = document.getElementById('file-header');
+            const fileTitle = document.getElementById('file-history-title');
+            if (fileHeader && fileTitle) {
+                if (data.fileTitle) {
+                    fileHeader.style.display = 'flex';
+                    fileTitle.textContent = 'File: ' + data.fileTitle;
+                } else {
+                    fileHeader.style.display = 'none';
+                }
+            }
+
             renderHistory();
             updateState();
         } else if (data.command === 'clearSearch') {
@@ -95,7 +167,8 @@
         vscode.setState({
             commits: allCommits,
             selectedRev: selectedRev,
-            searchValue: searchInput.value
+            searchValue: searchInput.value,
+            fileTitle: document.getElementById('file-history-title')?.textContent?.replace('File: ', '') || null
         });
     }
 
@@ -156,6 +229,7 @@
     function createCommitRow(c) {
         const div = document.createElement('div');
         div.className = 'commit-row';
+        div.dataset.rev = c.rev; // Added for selection lookup
         if (selectedRev === c.rev) { div.classList.add('selected'); }
         div.addEventListener('click', () => showDetails(c, div));
 

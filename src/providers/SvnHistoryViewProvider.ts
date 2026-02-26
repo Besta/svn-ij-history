@@ -27,6 +27,8 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private _svnService: SvnService;
     private _currentLimit = 50;
+    /** When set, history is scoped to this absolute file path instead of the whole repo. */
+    private _fileFilter?: string;
     /** Tracks temp files written for diffs so they can be cleaned up on deactivation. */
     private _tmpFiles: Set<string> = new Set();
 
@@ -53,8 +55,32 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
 
     /**
      * Resets the view to the initial state and reloads the history.
+     * If a file filter is active it is preserved; call clearFileFilter() first to go back to repo history.
      */
     public async refresh(): Promise<void> {
+        this._currentLimit = 50;
+        this._view?.webview.postMessage({ command: 'clearSearch' });
+        await this.loadHistory();
+    }
+
+    /**
+     * Scope the history view to a single file.
+     * @param absoluteFilePath The absolute path of the file to inspect.
+     */
+    public async showFileHistory(absoluteFilePath: string): Promise<void> {
+        this._fileFilter = absoluteFilePath;
+        this._currentLimit = 50;
+        this._view?.webview.postMessage({ command: 'clearSearch' });
+        // Reveal the panel if it is not currently visible
+        if (this._view) { this._view.show(true); }
+        await this.loadHistory();
+    }
+
+    /**
+     * Removes the file scope and goes back to full repository history.
+     */
+    public async clearFileFilter(): Promise<void> {
+        this._fileFilter = undefined;
         this._currentLimit = 50;
         this._view?.webview.postMessage({ command: 'clearSearch' });
         await this.loadHistory();
@@ -186,6 +212,9 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 case 'openLocal':
                     await this.openLocalFile(data.path, data.folder === true);
                     break;
+                case 'clearFileFilter':
+                    await this.clearFileFilter();
+                    break;
             }
         });
 
@@ -197,12 +226,20 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
 
     /**
      * Fetches SVN logs and pushes them to the Webview.
+     * Calls getFileHistory() when a file filter is active, getHistory() otherwise.
      */
     private async loadHistory(): Promise<void> {
         if (!this._view) { return; }
         try {
-            const commits = await this._svnService.getHistory(this._currentLimit);
-            this._view.webview.postMessage({ command: 'updateCommits', commits });
+            const commits = this._fileFilter
+                ? await this._svnService.getFileHistory(this._fileFilter, this._currentLimit)
+                : await this._svnService.getHistory(this._currentLimit);
+
+            const title = this._fileFilter
+                ? path.basename(this._fileFilter)
+                : undefined;
+
+            this._view.webview.postMessage({ command: 'updateCommits', commits, fileTitle: title });
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err);
             vscode.window.showErrorMessage('SVN Error: ' + msg);
