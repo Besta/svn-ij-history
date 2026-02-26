@@ -184,26 +184,47 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
      * @returns Full HTML string.
      */
     private _getHtmlForWebview(webview: vscode.Webview) {
-        const toolkitUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode', 'webview-ui-toolkit', 'dist', 'toolkit.min.js'));
-
         return `<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <script type="module" src="${toolkitUri}"></script>
         <style>
-            body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: var(--vscode-font-family); color: var(--vscode-foreground); overflow: hidden; }
-            #search-bar { padding: 8px 12px 4px 12px; background: var(--vscode-panel-background); }
-            #status-bar { padding: 0 12px 8px 12px; font-size: 0.75em; opacity: 0.7; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-panel-background); }
+            body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: var(--vscode-font-family); color: var(--vscode-foreground); overflow: hidden; background-color: var(--vscode-sideBar-background); }
+            
+            /* Search Container with absolute visibility */
+            #search-bar-container { 
+                padding: 10px 12px 6px 12px; 
+                flex-shrink: 0; 
+                background: var(--vscode-sideBar-background);
+                z-index: 100;
+            }
+
+            .native-input {
+                width: 100%;
+                box-sizing: border-box;
+                background-color: var(--vscode-input-background);
+                color: var(--vscode-input-foreground);
+                border: 1px solid var(--vscode-input-border);
+                padding: 5px 8px;
+                outline: none;
+                font-family: inherit;
+                font-size: 13px;
+            }
+
+            .native-input:focus {
+                border: 1px solid var(--vscode-focusBorder);
+            }
+
+            #status-bar { padding: 0 12px 8px 12px; font-size: 0.75em; opacity: 0.7; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); flex-shrink: 0; }
             #main-content { display: flex; flex: 1; overflow: hidden; position: relative; width: 100%; }
             #commit-list { flex: 1; min-width: 0; overflow-y: auto; background: var(--vscode-sideBar-background); display: flex; flex-direction: column; }
             #list-container { flex: 1; }
             #resizer { width: 5px; cursor: col-resize; background: var(--vscode-panel-border); display: none; z-index: 100; flex-shrink: 0; }
             #resizer:hover { background: var(--vscode-focusBorder); }
-            #details-panel { width: 50%; min-width: 200px; display: none; flex-direction: column; background: var(--vscode-editor-background); flex-shrink: 0; }
+            #details-panel { width: 50%; min-width: 200px; display: none; flex-direction: column; background: var(--vscode-editor-background); flex-shrink: 0; border-left: 1px solid var(--vscode-panel-border); }
             #details-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-panel-sectionHeader-background); }
             
-            summary { padding: 8px 12px; cursor: pointer; font-weight: bold; font-size: 0.85em; background-color: var(--vscode-sideBarSectionHeader-background, var(--vscode-editor-background)); position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--vscode-panel-border); outline: none; user-select: none; }
+            summary { padding: 8px 12px; cursor: pointer; font-weight: bold; font-size: 0.85em; background-color: var(--vscode-sideBarSectionHeader-background); position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--vscode-panel-border); outline: none; user-select: none; }
             summary:hover { filter: brightness(1.1); }
 
             .commit-row { display: flex; align-items: center; padding: 4px 12px; gap: 12px; cursor: pointer; border-bottom: 1px solid var(--vscode-panel-border); font-size: 0.85em; white-space: nowrap; overflow: hidden; }
@@ -232,8 +253,8 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
         </style>
     </head>
     <body>
-        <div id="search-bar">
-            <vscode-text-field id="search-input" placeholder="Filter by message, author, or revision..." style="width:100%"></vscode-text-field>
+        <div id="search-bar-container">
+            <input type="text" id="search-input" class="native-input" placeholder="Filter by message, author, or revision...">
         </div>
         <div id="status-bar">
             Loading history...

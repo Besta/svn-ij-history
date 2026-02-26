@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-02-26
+
+### Fixed
+- **Search Bar Reliability**: Replaced the `vscode-text-field` webview component with a native HTML input styled for VS Code. This resolves an issue where the search bar was not visible when the extension was installed from the Marketplace due to toolkit loading dependencies.
+- **UI Layout Stability**: Added CSS constraints to the search container to prevent it from being hidden or collapsed when the commit list contains many entries.
+
+---
+
 ## [1.0.2] - 2026-02-26
 
 ### Added
