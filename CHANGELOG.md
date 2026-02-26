@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Improved Iconography**: Integrated `@vscode/codicons` for professional action icons and implemented color-mapped text badges for file extensions.
 - **File Tab History**: Added "Show SVN History" to the editor tab context menu.
 - **File Count**: The commit list now shows the number of modified files for each revision (e.g., `[5 files]`).
+- **Get version**: Added a "Get this version" action to overwrite the local file with a specific revision from history, including a safety confirmation dialog.
 
 ### Changed
 - **Time Format**: Commit times are now always displayed in 24-hour format (e.g., 15:30) for improved readability and consistency.

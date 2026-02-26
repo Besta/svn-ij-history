@@ -146,6 +146,8 @@
                 vscode.postMessage({ command: 'openDiff', path: actionBtn.dataset.path, rev: actionBtn.dataset.rev });
             } else if (cmd === 'openLocal') {
                 vscode.postMessage({ command: 'openLocal', path: actionBtn.dataset.path, folder: actionBtn.dataset.folder === 'true' });
+            } else if (cmd === 'revertFile') {
+                vscode.postMessage({ command: 'revertFile', path: actionBtn.dataset.path, rev: actionBtn.dataset.rev });
             }
             return;
         }
@@ -352,6 +354,7 @@
 
             if (isFile) {
                 fileActions.append(
+                    makeIconButton('Get this version', 'revertFile', { path: f.path, rev: commit.rev }, 'desktop-download'),
                     makeIconButton('Open File', 'openLocal', { path: f.path, folder: 'false' })
                 );
             } else {
@@ -387,8 +390,9 @@
      * @param {string} title 
      * @param {string} command 
      * @param {Record<string, string>} dataset 
+     * @param {string} [iconClass] Optional codicon class (default: go-to-file)
      */
-    function makeIconButton(title, command, dataset) {
+    function makeIconButton(title, command, dataset, iconClass = 'go-to-file') {
         const btn = document.createElement('span');
         btn.className = 'icon-button';
         btn.title = title;
@@ -396,7 +400,7 @@
 
         // Use standard Codicon class
         const icon = document.createElement('i');
-        icon.className = 'codicon codicon-go-to-file';
+        icon.className = `codicon codicon-${iconClass}`;
         btn.appendChild(icon);
         return btn;
     }

@@ -184,6 +184,51 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
     }
 
     /**
+     * Overwrites the local file with content from a specific SVN revision.
+     * Shows a confirmation warning because it destroys local uncommitted changes.
+     * @param repoPath Relative path of the file in the repository.
+     * @param rev The revision number to fetch.
+     */
+    private async revertFile(repoPath: string, rev: string): Promise<void> {
+        const choice = await vscode.window.showWarningMessage(
+            `Are you sure you want to overwrite your local file with version r${rev}? Any uncommitted local changes will be lost.`,
+            { modal: true },
+            'Overwrite'
+        );
+
+        if (choice !== 'Overwrite') { return; }
+
+        try {
+            const rootUrl = await this._svnService.getRepoRoot();
+            const fullUrl = `${rootUrl}${repoPath}`;
+            const content = await this._svnService.getFileContent(fullUrl, rev);
+
+            // Resolve local path (same logic as openLocalFile)
+            const cleanRelPath = repoPath.replace(/^\/(trunk|branches\/[^/]+|tags\/[^/]+)\//, '');
+            let absolutePath = path.join(this._workspaceRoot, cleanRelPath);
+
+            // If not directly found, try to locate by filename
+            if (!fs.existsSync(absolutePath)) {
+                const targetName = repoPath.split('/').pop();
+                if (targetName) {
+                    const files = await vscode.workspace.findFiles(`**/${targetName}`, '**/node_modules/**', 1);
+                    if (files.length > 0) {
+                        absolutePath = files[0].fsPath;
+                    } else {
+                        throw new Error('Could not find the target file in the local workspace to overwrite.');
+                    }
+                }
+            }
+
+            fs.writeFileSync(absolutePath, content);
+            vscode.window.showInformationMessage(`Successfully reverted ${path.basename(absolutePath)} to r${rev}`);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            vscode.window.showErrorMessage('Revert Error: ' + msg);
+        }
+    }
+
+    /**
      * VS Code entry point for initializing the Webview.
      * @param webviewView The webview view instance to resolve.
      */
@@ -211,6 +256,9 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                     break;
                 case 'openLocal':
                     await this.openLocalFile(data.path, data.folder === true);
+                    break;
+                case 'revertFile':
+                    await this.revertFile(data.path, data.rev);
                     break;
                 case 'clearFileFilter':
                     await this.clearFileFilter();
