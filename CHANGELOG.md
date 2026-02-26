@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-02-26
+
+### Added
+- **File Tab History**: Added "Show SVN History" to the editor tab context menu. You can now right-click any file tab to view its history.
+
+### Changed
+- **Time Format**: Commit times are now always displayed in 24-hour format (e.g., 15:30) for improved readability and consistency.
+
 ## [1.0.4] - 2026-02-26
 
 ### Added
