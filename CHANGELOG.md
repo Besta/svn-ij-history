@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.5] - 2026-02-26
 
 ### Added
-- **UI Redesign**: Redesigned the changed files list in the details panel to match VS Code's Source Control view. Features single-row layout, path splitting, and hover icon actions.
+- **UI Redesign**: Redesigned the changed files list in the details panel to match VS Code's Source Control view with a single-row layout and path splitting.
+- **Improved Iconography**: Integrated `@vscode/codicons` for professional action icons and implemented color-mapped text badges for file extensions.
 - **File Tab History**: Added "Show SVN History" to the editor tab context menu.
 - **File Count**: The commit list now shows the number of modified files for each revision (e.g., `[5 files]`).
 

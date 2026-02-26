@@ -20,6 +20,32 @@
     /** @type {ReturnType<typeof setTimeout> | null} */
     let debounceTimer = null;
 
+    /** @type {Record<string, string>} */
+    const COLOR_MAP = {
+        'js': '#f1e05a',
+        'mjs': '#f1e05a',
+        'ts': '#3178c6',
+        'css': '#563d7c',
+        'html': '#e34c26',
+        'json': '#cbcb41',
+        'md': '#007acc',
+        'txt': '#cccccc',
+        'xml': '#e34c26',
+        'yml': '#cb171e',
+        'yaml': '#cb171e',
+        'png': '#61dafb',
+        'jpg': '#61dafb',
+        'svg': '#ffb13b',
+        'java': '#b07219',
+        'jsp': '#b07219',
+        'jsx': '#61dafb',
+        'vm': '#e34c26',
+        'class': '#9b6a22',
+        'properties': '#cbcb41',
+        'py': '#3572a5',
+        'go': '#00add8'
+    };
+
     // ── Restore persisted state (survives panel hide/show) ────────────────────
 
     const previousState = vscode.getState();
@@ -345,24 +371,15 @@
     }
 
     /**
-     * Returns a simple SVG or icon-like element based on file extension.
+     * Returns a colored text-based icons (extension) for the file.
      * @param {string} fileName 
      */
     function getFileIcon(fileName) {
-        const ext = fileName.split('.').pop()?.toLowerCase();
-        // SVGs for common types (simplified)
-        if (ext === 'js' || ext === 'mjs' || ext === 'ts') {
-            return '<span style="color:#f1e05a">JS</span>';
-        } else if (ext === 'css') {
-            return '<span style="color:#563d7c">#</span>';
-        } else if (ext === 'html') {
-            return '<span style="color:#e34c26"><></span>';
-        } else if (ext === 'json') {
-            return '<span style="color:#f1e05a">{}</span>';
-        } else if (ext === 'md') {
-            return '<span style="color:#083fa1">M↓</span>';
-        }
-        return '<span style="opacity:0.5">📄</span>';
+        const ext = fileName.split('.').pop()?.toLowerCase() || '';
+        const color = COLOR_MAP[ext] || '#888888';
+        const displayExt = ext.substring(0, 4).toUpperCase();
+
+        return `<span class="text-icon" style="color: ${color}">${displayExt || 'FILE'}</span>`;
     }
 
     /**

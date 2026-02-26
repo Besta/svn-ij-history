@@ -10,6 +10,10 @@ body {
     background-color: var(--vscode-sideBar-background);
 }
 
+* {
+    box-sizing: border-box;
+}
+
 #search-bar-container {
     padding: 10px 12px 6px 12px;
     flex-shrink: 0;
@@ -239,11 +243,29 @@ summary:hover {
 }
 
 .file-icon {
-    width: 16px;
     text-align: center;
     font-size: 10px;
     font-weight: bold;
     flex-shrink: 0;
+}
+
+.text-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 16px;
+    font-size: 9px;
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    padding: 0 1px;
+    flex-shrink: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    line-height: 1;
 }
 
 .file-name {
@@ -251,6 +273,7 @@ summary:hover {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .file-dir {
@@ -259,7 +282,7 @@ summary:hover {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-left: 4px;
+    min-width: 0;
 }
 
 .file-actions {
