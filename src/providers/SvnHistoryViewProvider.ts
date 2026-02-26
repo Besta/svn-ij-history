@@ -38,9 +38,10 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
      */
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        private readonly _workspaceRoot: string
+        private readonly _workspaceRoot: string,
+        svnService: SvnService
     ) {
-        this._svnService = new SvnService(_workspaceRoot);
+        this._svnService = svnService;
     }
 
     /**
@@ -107,6 +108,26 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
      */
     public setSearchValue(value: string): void {
         this._view?.webview.postMessage({ command: 'setSearch', value });
+    }
+
+    /**
+     * Focuses the history view and selects a specific revision.
+     * Fetches details if necessary to show them in the panel.
+     * @param rev The revision number to select.
+     */
+    public async selectRevision(rev: string): Promise<void> {
+        if (!this._view) { return; }
+
+        this._view.show(true); // Focus the view
+
+        try {
+            const commit = await this._svnService.getCommit(rev);
+            if (commit) {
+                this._view.webview.postMessage({ command: 'showCommitDetails', commit });
+            }
+        } catch (err) {
+            console.error('Error fetching commit:', err);
+        }
     }
 
     /**

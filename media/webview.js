@@ -174,32 +174,62 @@
 
     window.addEventListener('message', (event) => {
         const data = event.data;
-        if (data.command === 'updateCommits') {
-            allCommits = data.commits;
-            btnLoadMore.textContent = 'Load 50 more commits...';
+        switch (data.command) {
+            case 'updateCommits':
+                allCommits = data.commits;
+                btnLoadMore.textContent = 'Load 50 more commits...';
 
-            // Show/hide file history banner
-            const fileHeader = document.getElementById('file-header');
-            const fileTitle = document.getElementById('file-history-title');
-            if (fileHeader && fileTitle) {
-                if (data.fileTitle) {
-                    fileHeader.style.display = 'flex';
-                    fileTitle.textContent = 'File: ' + data.fileTitle;
-                } else {
-                    fileHeader.style.display = 'none';
+                // Show/hide file history banner
+                const fileHeader = document.getElementById('file-header');
+                const fileTitle = document.getElementById('file-history-title');
+                if (fileHeader && fileTitle) {
+                    if (data.fileTitle) {
+                        fileHeader.style.display = 'flex';
+                        fileTitle.textContent = 'File: ' + data.fileTitle;
+                    } else {
+                        fileHeader.style.display = 'none';
+                    }
                 }
-            }
 
-            renderHistory();
-            updateState();
-        } else if (data.command === 'clearSearch') {
-            searchInput.value = '';
-            updateState();
-            renderHistory();
-        } else if (data.command === 'setSearch') {
-            searchInput.value = data.value;
-            updateState();
-            renderHistory();
+                renderHistory();
+                updateState();
+                break;
+
+            case 'selectRevision':
+                const targetCommit = allCommits.find(c => c.rev === data.rev);
+                const row = document.querySelector(`.commit-row[data-rev="${data.rev}"]`);
+                if (targetCommit && row) {
+                    showDetails(targetCommit, row);
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Add a temporary highlight effect
+                    row.classList.add('selected');
+                    setTimeout(() => row.classList.remove('selected'), 2000);
+                }
+                break;
+
+            case 'showCommitDetails':
+                if (data.commit) {
+                    const existingRow = document.querySelector(`.commit-row[data-rev="${data.commit.rev}"]`);
+                    showDetails(data.commit, existingRow);
+                    if (existingRow) {
+                        existingRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        existingRow.classList.add('selected');
+                        setTimeout(() => existingRow.classList.remove('selected'), 2000);
+                    }
+                }
+                break;
+
+            case 'clearSearch':
+                searchInput.value = '';
+                updateState();
+                renderHistory();
+                break;
+
+            case 'setSearch':
+                searchInput.value = data.value;
+                updateState();
+                renderHistory();
+                break;
         }
     });
 
@@ -293,9 +323,11 @@
      * @param {any} commit
      * @param {HTMLElement} el
      */
-    function showDetails(commit, el) {
+    function showDetails(commit, el = null) {
         document.querySelectorAll('.commit-row').forEach((r) => r.classList.remove('selected'));
-        el.classList.add('selected');
+        if (el) {
+            el.classList.add('selected');
+        }
         detailsPanel.style.display = 'flex';
         resizer.style.display = 'block';
 

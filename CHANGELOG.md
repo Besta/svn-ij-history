@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-26
+
+### Added
+- **IntelliJ-style SVN Blame**: Professional gutter-style annotations in the editor. Shows author name and revision on the left side of every line. Toggle it via the editor title menu or context menu.
+- **Improved Provider Architecture**: Refactored `SvnHistoryViewProvider` to share a central `SvnService` instance.
+
+## [1.1.0] - 2026-02-26
+- **SVN Blame (Annotate)**: Added professional IntelliJ-style inline annotations.
+  - **Author Coloring**: Automatic HSL coloring based on author name for quick visual scanning.
+  - **Interactive Links**: Click on an annotation to instantly view commit details in the history panel.
+  - **Per-file Scoping**: Annotations are toggled per file and don't interfere with other open editors.
+  - **External Fetching**: View details even for old commits not currently loaded in the history list.
+- **UI Tweaks**: Refined blame display format (`rev author dd/mm/yy`).
+
 ## [1.0.5] - 2026-02-26
 
 ### Added

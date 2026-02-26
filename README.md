@@ -9,6 +9,12 @@ Bring the powerful **IntelliJ-style SVN History** experience to Visual Studio Co
 ### 📅 Smart Timeline
 Navigation made easy. Commits are automatically grouped into intuitive time periods like **Today**, **Yesterday**, **Last Week**, or **Older**, allowing you to scan your project history at a glance.
 
+### 🎨 Professional Annotations (Blame)
+Get instant context on every line of code without leaving the editor.
+- **IntelliJ-style Gutter**: Author names and revisions are displayed on the left side, always visible when toggled.
+- **Dynamic Toggle**: Easily enable or disable annotations from the editor title bar or context menu.
+- **Performance Focused**: Efficient XML parsing and decoration management with local caching.
+
 ### 🖼️ Professional Detail Panel
 A side-by-side interface that lets you inspect commit details without losing context:
 - **VS Code Native UI**: A redesigned file list that perfectly matches the built-in Source Control view.
@@ -45,6 +51,9 @@ Stay in the flow with full keyboard support:
 
 1. **Install** the extension from the VS Code Marketplace.
 2. Open a workspace that contains an **SVN checkout**.
+- ⚡ **Instant Diff**: Fast, native-feeling diff view for any revision.
+- 🎨 **SVN Blame (Annotate)**: Professional inline annotations with author-based coloring and interactive links to commit details.
+- 📂 **File History**: Deep dive into the history of a specific file directly from the context menu.
 3. Locate the **SVN History** icon in the Source Control side-bar or use the context menu on any file.
 
 ### Requirements

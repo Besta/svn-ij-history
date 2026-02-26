@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { SvnHistoryViewProvider } from './providers/SvnHistoryViewProvider';
+import { SvnService } from './utils/SvnService';
+import { BlameDecorator } from './decorators/BlameDecorator';
 
 /**
  * This method is called when your extension is activated.
@@ -15,7 +17,9 @@ export function activate(context: vscode.ExtensionContext): void {
         return;
     }
 
-    const provider = new SvnHistoryViewProvider(context.extensionUri, workspaceRoot);
+    const svnService = new SvnService(workspaceRoot);
+    const provider = new SvnHistoryViewProvider(context.extensionUri, workspaceRoot, svnService);
+    const blameDecorator = new BlameDecorator(svnService);
 
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(SvnHistoryViewProvider.viewType, provider)
@@ -48,10 +52,6 @@ export function activate(context: vscode.ExtensionContext): void {
         })
     );
 
-    /**
-     * New Command: Show SVN History for a specific file.
-     * Triggered from context menus or command palette.
-     */
     context.subscriptions.push(
         vscode.commands.registerCommand('svn-ij-history.showFileHistory', async (fileUri?: vscode.Uri) => {
             const targetUri = fileUri || vscode.window.activeTextEditor?.document.uri;
@@ -63,7 +63,34 @@ export function activate(context: vscode.ExtensionContext): void {
         })
     );
 
+    context.subscriptions.push(
+        vscode.commands.registerCommand('svn-ij-history.toggleBlame', async (uri?: vscode.Uri) => {
+            const targetUri = uri || vscode.window.activeTextEditor?.document.uri;
+            if (targetUri && targetUri.scheme === 'file') {
+                await blameDecorator.toggleBlame(targetUri);
+            } else {
+                vscode.window.showErrorMessage('Please open a local file to use SVN Blame.');
+            }
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('svn-ij-history.openCommitDetails', (rev: string) => {
+            provider.selectRevision(rev);
+        })
+    );
+
+    // Update decorations when active editor changes
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+            if (editor) {
+                await blameDecorator.updateDecorations(editor);
+            }
+        })
+    );
+
     // Clean up temp diff files when the extension is deactivated
+    context.subscriptions.push(blameDecorator);
     context.subscriptions.push({
         dispose: () => provider.cleanupTmpFiles()
     });

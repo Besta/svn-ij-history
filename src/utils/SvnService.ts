@@ -25,6 +25,16 @@ export interface SvnCommit {
 }
 
 /**
+ * Represents a single line in the SVN blame output.
+ */
+export interface BlameLine {
+    line: number;
+    rev: string;
+    author: string;
+    date: Date;
+}
+
+/**
  * Service class to handle Subversion (SVN) CLI operations and XML parsing.
  * Uses execFile (not exec) to avoid shell injection vulnerabilities.
  */
@@ -70,6 +80,21 @@ export class SvnService {
     }
 
     /**
+     * Fetches details for a specific revision.
+     * @param rev The revision number.
+     * @returns A promise resolving to an SvnCommit object or undefined.
+     */
+    public async getCommit(rev: string): Promise<SvnCommit | undefined> {
+        const { stdout } = await execFileAsync(
+            'svn',
+            ['log', '-r', rev, '--xml', '--verbose'],
+            { cwd: this.workspaceRoot }
+        );
+        const commits = this.parseXml(stdout);
+        return commits.length > 0 ? commits[0] : undefined;
+    }
+
+    /**
      * Retrieves the text content of a specific file at a specific revision.
      * @param repoUrl The full SVN URL of the file.
      * @param rev The revision number.
@@ -98,6 +123,20 @@ export class SvnService {
         const match = stdout.match(/<root>(.*?)<\/root>/);
         this._repoRootCache = match ? match[1] : '';
         return this._repoRootCache;
+    }
+
+    /**
+     * Fetches the blame/annotate information for a file.
+     * @param absoluteFilePath The absolute path of the file.
+     * @returns A promise resolving to an array of BlameLine objects.
+     */
+    public async getFileAnnotate(absoluteFilePath: string): Promise<BlameLine[]> {
+        const { stdout } = await execFileAsync(
+            'svn',
+            ['annotate', '--xml', absoluteFilePath],
+            { cwd: this.workspaceRoot }
+        );
+        return this.parseAnnotateXml(stdout);
     }
 
     /**
@@ -140,5 +179,26 @@ export class SvnService {
             });
         }
         return commits;
+    }
+
+    /**
+     * Parses SVN XML annotate output.
+     * @param xml The raw XML string from SVN CLI.
+     */
+    private parseAnnotateXml(xml: string): BlameLine[] {
+        const lines: BlameLine[] = [];
+        // Matches <entry line-number="X">...<commit revision="Y"><author>Z</author><date>T</date></commit>...</entry>
+        const entryRegex = /<entry\s+line-number="(\d+)">[\s\S]*?<commit\s+revision="(\d+)">[\s\S]*?<author>(.*?)<\/author>[\s\S]*?<date>(.*?)<\/date>[\s\S]*?<\/commit>[\s\S]*?<\/entry>/g;
+
+        let m;
+        while ((m = entryRegex.exec(xml)) !== null) {
+            lines.push({
+                line: parseInt(m[1]),
+                rev: m[2],
+                author: m[3],
+                date: new Date(m[4])
+            });
+        }
+        return lines;
     }
 }
