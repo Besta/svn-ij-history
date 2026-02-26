@@ -2,6 +2,15 @@
 
 Tutti i cambiamenti significativi a questo progetto saranno documentati in questo file.
 
+## [1.0.1] - 2026-02-26
+
+### Fixed
+- **Compatibility**: Allineate le dipendenze di sviluppo (`@types/vscode`) con i requisiti del motore di VS Code (`engines`).
+- **Build Process**: Corretti i riferimenti nel `package.json` per risolvere l'errore `ETARGET` durante l'installazione dei moduli npm.
+- **Publisher Identity**: Ottimizzato l'ID del publisher per la conformità con il Marketplace di Visual Studio.
+
+---
+
 ## [1.0.0] - 2026-02-26
 
 ### 🚀 Release Iniziale
@@ -15,8 +24,3 @@ Siamo lieti di annunciare la prima versione ufficiale di **SVN IJ History**! Que
 - **Navigazione nel Workspace**: Comandi rapidi per aprire i file nel workspace locale o rivelarli nell'esplora risorse partendo da un commit SVN.
 - **Gestione Performance**: Caricamento incrementale (50 commit alla volta) per garantire fluidità anche su repository con cronologie molto lunghe.
 - **Persistenza dello Stato**: L'estensione ricorda i tuoi dati, la selezione e il filtro di ricerca anche se cambi pannello laterale o chiudi temporaneamente la vista.
-- **Integrazione UI Nativa**: Comandi di refresh integrati direttamente nella barra del titolo di VS Code per un'esperienza d'uso coerente.
-
----
-
-*Sviluppato per rendere la gestione di Subversion più moderna, veloce e piacevole.*
