@@ -5,19 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-02-27
+
+### Added
+- **Native UI Migration**: Replaced all Webview-based components (History and Details) with native VS Code `TreeView` for a faster and more integrated experience.
+- **Commit Details Refinement**:
+  - Consolidated revision and message into a single header line.
+  - Redesigned changed files list with native icons and secondary path display.
+  - OS-specific path normalization for all displays.
+- **Clipboard Power Actions**: New right-click context menu options to copy:
+  - **Revision Number** (from history or details).
+  - **Path Relative** and **Path Absolute** (auto-normalized per OS).
+  - **File Name**.
+- **Enhanced SVN Annotate**:
+  - Renamed "Blame" to **"Annotate"** across the entire extension.
+  - Added "Annotate" to the editor gutter context menu (line number area).
+  - Dynamic menu labels: "Show Annotations" / "Hide Annotations" based on active status.
+- **UI/UX Polishing**:
+  - One-click interaction to view commit details or load more logs.
+  - Double-click/Click-to-open logic for comparing files (Diff).
+  - Added file count to commit items in the history list.
+
+### Fixed
+- **Gutter Annotate Command**: Resolved an issue where triggering Annotate from the gutter context menu wouldn't correctly identify the target file.
+
 ## [1.1.0] - 2026-02-26
 
 ### Added
-- **IntelliJ-style SVN Blame**: Professional gutter-style annotations in the editor. Shows author name and revision on the left side of every line. Toggle it via the editor title menu or context menu.
-- **Improved Provider Architecture**: Refactored `SvnHistoryViewProvider` to share a central `SvnService` instance.
-
-## [1.1.0] - 2026-02-26
 - **SVN Blame (Annotate)**: Added professional IntelliJ-style inline annotations.
   - **Author Coloring**: Automatic HSL coloring based on author name for quick visual scanning.
   - **Interactive Links**: Click on an annotation to instantly view commit details in the history panel.
   - **Per-file Scoping**: Annotations are toggled per file and don't interfere with other open editors.
   - **External Fetching**: View details even for old commits not currently loaded in the history list.
-- **UI Tweaks**: Refined blame display format (`rev author dd/mm/yy`).
 
 ## [1.0.5] - 2026-02-26
 

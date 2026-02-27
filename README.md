@@ -7,24 +7,25 @@ Bring the powerful **IntelliJ-style SVN History** experience to Visual Studio Co
 ## ✨ Key Features
 
 ### 📅 Smart Timeline
-Navigation made easy. Commits are automatically grouped into intuitive time periods like **Today**, **Yesterday**, **Last Week**, or **Older**, allowing you to scan your project history at a glance.
+Commits are automatically grouped into intuitive time periods like **Today**, **Yesterday**, **Last Week**, or **Older**, with real-time counters showing exactly how many commits are in each group.
 
-### 🎨 Professional Annotations (Blame)
+### 🎨 Professional Annotations (Annotate)
 Get instant context on every line of code without leaving the editor.
-- **IntelliJ-style Gutter**: Author names and revisions are displayed on the left side, always visible when toggled.
-- **Dynamic Toggle**: Easily enable or disable annotations from the editor title bar or context menu.
-- **Performance Focused**: Efficient XML parsing and decoration management with local caching.
+- **IntelliJ-style Gutter**: Author names and revisions are displayed on the left side, with automatic author-based coloring.
+- **Interactions**: Click any annotation to jump straight to its details in the history panel.
+- **Gutter Context Menu**: Right-click the line number area to quickly toggle **Show/Hide Annotations**.
 
-### 🖼️ Professional Detail Panel
-A side-by-side interface that lets you inspect commit details without losing context:
-- **VS Code Native UI**: A redesigned file list that perfectly matches the built-in Source Control view.
-- **Rich Iconography**: Integration with `@vscode/codicons` and color-coded file extension badges for instant recognition.
-- **Path Splitting**: Clearly see the filename and its parent directory in a clean, single-row layout.
+### 🖼️ Full Native Integration
+Experience a seamless, high-performance UI built entirely on VS Code native components:
+- **Native TreeViews**: Both the History and Details panels use native TreeViews for lightning-fast scanning and perfect theme integration.
+- **Rich Iconography**: Integration with `@vscode/codicons` for file types and git-like actions (A/M/D).
+- **Clipboard Power Actions**: Right-click any file or commit to copy **Revision Number**, **Filenames**, or **Normalized Paths** (Absolute or Relative).
 
 ### ⚡ Power User Actions
-- **One-Click Diff**: Click any file to open the native VS Code diff editor and compare revisions instantly.
-- **Get Version (Revert)**: Directly overwrite your local workspace file with a specific revision from history (includes a safety confirmation dialog).
-- **Explorer & Editor Integration**: Right-click any file in the Explorer or any open Editor tab to jump straight to its SVN history.
+- **Single-Click Workflow**: Simply click a commit to view its details or load more logs instantly.
+- **Quick Diff**: Double-click any file in the details list to open the native VS Code diff editor and compare revisions.
+- **Get Version (Revert)**: Overwrite your local workspace file with a specific revision from history (includes a safety confirmation dialog).
+- **Explorer & Editor Integration**: Right-click any file in the Explorer or Editor tab to view its SVN history.
 
 ### 🔍 Search & Filtering
 - **Real-time Filter**: Search through hundreds of commits by **Author**, **Message**, or **Revision number**.

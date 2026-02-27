@@ -2,7 +2,7 @@
   "name": "svn-ij-history",
   "displayName": "SVN IntelliJ-style History",
   "description": "SVN history viewer inspired by IntelliJ with advanced search, timeline grouping, and quick diff.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "SimoneBestazza",
   "license": "MIT",
   "repository": {
@@ -42,14 +42,39 @@
     "views": {
       "svn-ij-history-container": [
         {
-          "type": "webview",
-          "id": "svn-ij-history.view",
-          "name": "Commits",
+          "id": "svn-ij-history.history-tree",
+          "name": "History",
+          "type": "tree",
           "icon": "$(history)"
+        },
+        {
+          "type": "tree",
+          "id": "svn-ij-history.details-tree",
+          "name": "Details",
+          "icon": "$(info)",
+          "when": "svn-ij-history:hasCommitSelected"
         }
       ]
     },
     "commands": [
+      {
+        "command": "svn-ij-history.clearDetails",
+        "title": "Clear Details",
+        "category": "SVN History",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "svn-ij-history.clearFilter",
+        "title": "Clear Filter",
+        "category": "SVN History",
+        "icon": "$(close)"
+      },
+      {
+        "command": "svn-ij-history.search",
+        "title": "Search",
+        "category": "SVN History",
+        "icon": "$(search)"
+      },
       {
         "command": "svn-ij-history.filterUser",
         "title": "Filter by User",
@@ -69,23 +94,88 @@
         "icon": "$(history)"
       },
       {
-        "command": "svn-ij-history.toggleBlame",
-        "title": "Annotate",
+        "command": "svn-ij-history.toggleAnnotate",
+        "title": "Toggle Annotate",
         "category": "SVN History",
         "icon": "$(info)"
+      },
+      {
+        "command": "svn-ij-history.showAnnotate",
+        "title": "Show Annotations",
+        "category": "SVN History",
+        "icon": "$(info)"
+      },
+      {
+        "command": "svn-ij-history.hideAnnotate",
+        "title": "Hide Annotations",
+        "category": "SVN History",
+        "icon": "$(info)"
+      },
+      {
+        "command": "svn-ij-history.openDiff",
+        "title": "Compare with Previous",
+        "category": "SVN History",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "svn-ij-history.openLocal",
+        "title": "Open File",
+        "category": "SVN History",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "svn-ij-history.revertFile",
+        "title": "Get this Version",
+        "category": "SVN History",
+        "icon": "$(desktop-download)"
+      },
+      {
+        "command": "svn-ij-history.copyRevision",
+        "title": "Copy Revision Number",
+        "category": "SVN History"
+      },
+      {
+        "command": "svn-ij-history.copyRelPath",
+        "title": "Copy Path Relative",
+        "category": "SVN History"
+      },
+      {
+        "command": "svn-ij-history.copyAbsPath",
+        "title": "Copy Path Absolute",
+        "category": "SVN History"
+      },
+      {
+        "command": "svn-ij-history.copyFileName",
+        "title": "Copy File Name",
+        "category": "SVN History"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "svn-ij-history.filterUser",
-          "when": "view == svn-ij-history.view",
+          "command": "svn-ij-history.clearDetails",
+          "when": "view == svn-ij-history.details-tree",
+          "group": "navigation"
+        },
+        {
+          "command": "svn-ij-history.clearFilter",
+          "when": "view == svn-ij-history.history-tree && svn-ij-history:isFiltered",
+          "group": "navigation@0"
+        },
+        {
+          "command": "svn-ij-history.search",
+          "when": "view == svn-ij-history.history-tree",
           "group": "navigation@1"
         },
         {
+          "command": "svn-ij-history.filterUser",
+          "when": "view == svn-ij-history.history-tree",
+          "group": "navigation@2"
+        },
+        {
           "command": "svn-ij-history.refresh",
-          "when": "view == svn-ij-history.view",
-          "group": "navigation"
+          "when": "view == svn-ij-history.history-tree",
+          "group": "navigation@3"
         }
       ],
       "explorer/context": [
@@ -102,9 +192,71 @@
           "group": "7_modification"
         },
         {
-          "command": "svn-ij-history.toggleBlame",
-          "when": "resourceScheme == file",
+          "command": "svn-ij-history.showAnnotate",
+          "when": "resourceScheme == file && !svn-ij-history:isAnnotateActive",
           "group": "7_modification"
+        },
+        {
+          "command": "svn-ij-history.hideAnnotate",
+          "when": "resourceScheme == file && svn-ij-history:isAnnotateActive",
+          "group": "7_modification"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "svn-ij-history.copyRevision",
+          "when": "view == svn-ij-history.history-tree && viewItem == commit-item",
+          "group": "1_clipboard"
+        },
+        {
+          "command": "svn-ij-history.copyRevision",
+          "when": "view == svn-ij-history.details-tree && viewItem == commit-header",
+          "group": "1_clipboard"
+        },
+        {
+          "command": "svn-ij-history.openDiff",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "inline@1"
+        },
+        {
+          "command": "svn-ij-history.openDiff",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "2_modification"
+        },
+        {
+          "command": "svn-ij-history.openLocal",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "inline@2"
+        },
+        {
+          "command": "svn-ij-history.openLocal",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "2_modification"
+        },
+        {
+          "command": "svn-ij-history.revertFile",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "inline@3"
+        },
+        {
+          "command": "svn-ij-history.revertFile",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "2_modification"
+        },
+        {
+          "command": "svn-ij-history.copyRelPath",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "3_clipboard"
+        },
+        {
+          "command": "svn-ij-history.copyAbsPath",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "3_clipboard"
+        },
+        {
+          "command": "svn-ij-history.copyFileName",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "3_clipboard"
         }
       ],
       "editor/title": [
@@ -114,8 +266,13 @@
           "group": "navigation"
         },
         {
-          "command": "svn-ij-history.toggleBlame",
-          "when": "resourceScheme == file",
+          "command": "svn-ij-history.showAnnotate",
+          "when": "resourceScheme == file && !svn-ij-history:isAnnotateActive",
+          "group": "navigation"
+        },
+        {
+          "command": "svn-ij-history.hideAnnotate",
+          "when": "resourceScheme == file && svn-ij-history:isAnnotateActive",
           "group": "navigation"
         }
       ],
@@ -126,8 +283,25 @@
           "group": "7_modification"
         },
         {
-          "command": "svn-ij-history.toggleBlame",
-          "when": "resourceScheme == file",
+          "command": "svn-ij-history.showAnnotate",
+          "when": "resourceScheme == file && !svn-ij-history:isAnnotateActive",
+          "group": "7_modification"
+        },
+        {
+          "command": "svn-ij-history.hideAnnotate",
+          "when": "resourceScheme == file && svn-ij-history:isAnnotateActive",
+          "group": "7_modification"
+        }
+      ],
+      "editor/lineNumber/context": [
+        {
+          "command": "svn-ij-history.showAnnotate",
+          "when": "resourceScheme == file && !svn-ij-history:isAnnotateActive",
+          "group": "7_modification"
+        },
+        {
+          "command": "svn-ij-history.hideAnnotate",
+          "when": "resourceScheme == file && svn-ij-history:isAnnotateActive",
           "group": "7_modification"
         }
       ]

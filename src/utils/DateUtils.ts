@@ -28,6 +28,21 @@ export class DateUtils {
     }
 
     /**
+     * Formats a date for the commit list, showing only time for today/yesterday.
+     * @param date The date to format.
+     * @param groupLabel The group label (e.g., "Today").
+     */
+    public static formatListDate(date: Date, groupLabel: string): string {
+        if (groupLabel === 'Today' || groupLabel === 'Yesterday') {
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+        return date.toLocaleString('en-US', {
+            month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', hour12: false
+        });
+    }
+
+    /**
      * Formats a date object into a concise string for the commit list.
      * @param date The date to format.
      * @returns A formatted string (e.g., "02/26/26, 10:21 AM").

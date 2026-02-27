@@ -1,21 +1,28 @@
 import * as vscode from 'vscode';
-import { SvnService, BlameLine } from '../utils/SvnService';
+import { SvnService, AnnotateLine } from '../utils/SvnService';
 
 /**
- * Manages SVN Blame (Annotate) decorations in the editor gutter.
+ * Manages SVN Annotate decorations in the editor gutter.
  * Displays author name and revision on the left side of the code.
  */
-export class BlameDecorator {
+export class AnnotateDecorator {
     private _authorDecorationTypes: Map<string, vscode.TextEditorDecorationType> = new Map();
     private _enabledFiles: Set<string> = new Set();
-    private _cache: Map<string, BlameLine[]> = new Map();
+    private _cache: Map<string, AnnotateLine[]> = new Map();
 
     constructor(private _svnService: SvnService) { }
 
     /**
-     * Toggles the blame annotations for a specific file.
+     * Checks if annotations are enabled for a specific URI.
      */
-    public async toggleBlame(uri: vscode.Uri): Promise<void> {
+    public isEnabled(uri: vscode.Uri): boolean {
+        return this._enabledFiles.has(uri.fsPath);
+    }
+
+    /**
+     * Toggles the annotate annotations for a specific file.
+     */
+    public async toggleAnnotate(uri: vscode.Uri): Promise<void> {
         const fsPath = uri.fsPath;
         if (this._enabledFiles.has(fsPath)) {
             this._enabledFiles.delete(fsPath);
@@ -42,16 +49,16 @@ export class BlameDecorator {
         }
 
         try {
-            let blameData = this._cache.get(fsPath);
-            if (!blameData) {
-                blameData = await this._svnService.getFileAnnotate(fsPath);
-                this._cache.set(fsPath, blameData);
+            let annotateData = this._cache.get(fsPath);
+            if (!annotateData) {
+                annotateData = await this._svnService.getFileAnnotate(fsPath);
+                this._cache.set(fsPath, annotateData);
             }
 
             // Organize decorations by author to apply specific colors
             const decorationsByAuthor: Map<string, vscode.DecorationOptions[]> = new Map();
 
-            blameData.forEach((b) => {
+            annotateData.forEach((b) => {
                 const lineIndex = b.line - 1;
                 if (lineIndex >= editor.document.lineCount) { return; }
 
@@ -89,7 +96,7 @@ export class BlameDecorator {
                 editor.setDecorations(decType, decs);
             });
         } catch (err) {
-            console.error('Blame Error:', err);
+            console.error('Annotate Error:', err);
         }
     }
 

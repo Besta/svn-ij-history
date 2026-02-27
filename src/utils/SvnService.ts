@@ -25,9 +25,9 @@ export interface SvnCommit {
 }
 
 /**
- * Represents a single line in the SVN blame output.
+ * Represents a single line in the SVN annotate output.
  */
-export interface BlameLine {
+export interface AnnotateLine {
     line: number;
     rev: string;
     author: string;
@@ -45,7 +45,7 @@ export class SvnService {
     /**
      * @param workspaceRoot The local file system path to the SVN workspace.
      */
-    constructor(private workspaceRoot: string) { }
+    constructor(public workspaceRoot: string) { }
 
     /**
      * Fetches the SVN log history using the command line.
@@ -126,11 +126,11 @@ export class SvnService {
     }
 
     /**
-     * Fetches the blame/annotate information for a file.
+     * Fetches the annotate information for a file.
      * @param absoluteFilePath The absolute path of the file.
-     * @returns A promise resolving to an array of BlameLine objects.
+     * @returns A promise resolving to an array of AnnotateLine objects.
      */
-    public async getFileAnnotate(absoluteFilePath: string): Promise<BlameLine[]> {
+    public async getFileAnnotate(absoluteFilePath: string): Promise<AnnotateLine[]> {
         const { stdout } = await execFileAsync(
             'svn',
             ['annotate', '--xml', absoluteFilePath],
@@ -185,8 +185,8 @@ export class SvnService {
      * Parses SVN XML annotate output.
      * @param xml The raw XML string from SVN CLI.
      */
-    private parseAnnotateXml(xml: string): BlameLine[] {
-        const lines: BlameLine[] = [];
+    private parseAnnotateXml(xml: string): AnnotateLine[] {
+        const lines: AnnotateLine[] = [];
         // Matches <entry line-number="X">...<commit revision="Y"><author>Z</author><date>T</date></commit>...</entry>
         const entryRegex = /<entry\s+line-number="(\d+)">[\s\S]*?<commit\s+revision="(\d+)">[\s\S]*?<author>(.*?)<\/author>[\s\S]*?<date>(.*?)<\/date>[\s\S]*?<\/commit>[\s\S]*?<\/entry>/g;
 
