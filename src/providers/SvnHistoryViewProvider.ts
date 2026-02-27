@@ -284,6 +284,13 @@ export class SvnHistoryViewProvider implements vscode.WebviewViewProvider {
                 case 'clearFileFilter':
                     await this.clearFileFilter();
                     break;
+                case 'showFileHistory':
+                    if (data.path) {
+                        const cleanRelPath = data.path.replace(/^\/(trunk|branches\/[^/]+|tags\/[^/]+)\//, '');
+                        const absolutePath = path.join(this._workspaceRoot, cleanRelPath);
+                        await this.showFileHistory(absolutePath);
+                    }
+                    break;
             }
         });
 

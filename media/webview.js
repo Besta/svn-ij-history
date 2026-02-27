@@ -163,6 +163,27 @@
         }
     });
 
+    document.getElementById('det-files')?.addEventListener('contextmenu', (e) => {
+        const target = /** @type {HTMLElement} */ (e.target);
+        const fileItem = target.closest('.file-item');
+        if (fileItem) {
+            e.preventDefault();
+            const fileInfo = fileItem.querySelector('.file-info');
+            if (fileInfo instanceof HTMLElement && fileInfo.dataset) {
+                showContextMenu(e.clientX, e.clientY, {
+                    path: fileInfo.dataset.path || '',
+                    rev: fileInfo.dataset.rev || ''
+                });
+            }
+        }
+    });
+
+    // Close context menu on any click outside
+    document.addEventListener('click', () => {
+        const existing = document.querySelector('.context-menu');
+        if (existing) { existing.remove(); }
+    });
+
     resizer.addEventListener('mousedown', () => {
         isResizing = true;
         document.addEventListener('mousemove', handleMouseMove);
@@ -483,5 +504,105 @@
         span.textContent = label;
         Object.assign(span.dataset, dataset);
         return span;
+    }
+
+    /**
+     * Shows a custom context menu for a file.
+     * @param {number} x
+     * @param {number} y
+     * @param {{path: string, rev: string}} file
+     */
+    function showContextMenu(x, y, file) {
+        const existing = document.querySelector('.context-menu');
+        if (existing) { existing.remove(); }
+
+        const menu = document.createElement('div');
+        menu.className = 'context-menu';
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
+
+        const isFile = !file.path.endsWith('/') && file.path.includes('.');
+
+        // Actions
+        menu.appendChild(makeMenuItem('Compare with Previous', 'diff', () => {
+            vscode.postMessage({ command: 'openDiff', path: file.path, rev: file.rev });
+        }));
+
+        menu.appendChild(makeMenuSeparator());
+
+        if (isFile) {
+            menu.appendChild(makeMenuItem('Open File', 'go-to-file', () => {
+                vscode.postMessage({ command: 'openLocal', path: file.path, folder: false });
+            }));
+        }
+
+        menu.appendChild(makeMenuItem('Reveal in Explorer', 'folder-opened', () => {
+            vscode.postMessage({ command: 'openLocal', path: file.path, folder: true });
+        }));
+
+        menu.appendChild(makeMenuSeparator());
+
+        if (isFile) {
+            menu.appendChild(makeMenuItem('Get this Version', 'desktop-download', () => {
+                vscode.postMessage({ command: 'revertFile', path: file.path, rev: file.rev });
+            }));
+        }
+
+        menu.appendChild(makeMenuItem('Show History for this File', 'history', () => {
+            vscode.postMessage({ command: 'showFileHistory', path: file.path });
+        }));
+
+        menu.appendChild(makeMenuSeparator());
+
+        menu.appendChild(makeMenuItem('Copy Path', 'copy', () => {
+            const input = document.createElement('input');
+            input.value = file.path;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+        }));
+
+        document.body.appendChild(menu);
+
+        // Adjust position if it goes off screen
+        const rect = menu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+            menu.style.left = (window.innerWidth - rect.width - 5) + 'px';
+        }
+        if (rect.bottom > window.innerHeight) {
+            menu.style.top = (window.innerHeight - rect.height - 5) + 'px';
+        }
+    }
+
+    /**
+     * @param {string} label 
+     * @param {string} iconClass 
+     * @param {() => void} onClick 
+     */
+    function makeMenuItem(label, iconClass, onClick) {
+        const item = document.createElement('div');
+        item.className = 'context-menu-item';
+
+        const icon = document.createElement('i');
+        icon.className = `codicon codicon-${iconClass}`;
+
+        const text = document.createElement('span');
+        text.textContent = label;
+
+        item.appendChild(icon);
+        item.appendChild(text);
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onClick();
+            item.parentElement?.remove();
+        });
+        return item;
+    }
+
+    function makeMenuSeparator() {
+        const sep = document.createElement('div');
+        sep.className = 'context-menu-separator';
+        return sep;
     }
 }());
