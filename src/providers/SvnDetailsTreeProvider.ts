@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { SvnService, SvnCommit } from '../utils/SvnService';
+import { PathUtils } from '../utils/PathUtils';
 import * as path from 'path';
 
 export class SvnDetailItem extends vscode.TreeItem {
@@ -14,17 +15,12 @@ export class SvnDetailItem extends vscode.TreeItem {
         super(label, collapsibleState);
 
         if (file) {
-            // Description: Action and relative path (gray text on the right)
-            const cleanRelPath = file.path.replace(/^\/(trunk|branches\/[^/]+|tags\/[^/]+)\//, '');
-            const normalizedRelPath = path.normalize(cleanRelPath);
-            const lastSep = normalizedRelPath.lastIndexOf(path.sep);
-            const dirPath = lastSep === -1 ? '' : normalizedRelPath.substring(0, lastSep);
-
+            const dirPath = PathUtils.getDirPath(file.path);
             this.description = [file.action, dirPath].filter(Boolean).join(' • ');
-            this.tooltip = normalizedRelPath;
+            this.tooltip = path.normalize(PathUtils.cleanRepoPath(file.path));
 
             // Construct absolute path for native icons
-            const absolutePath = path.join(this.workspaceRoot, cleanRelPath);
+            const absolutePath = PathUtils.toFsPath(file.path, this.workspaceRoot);
             this.resourceUri = vscode.Uri.file(absolutePath);
 
             this.contextValue = `file-item`;

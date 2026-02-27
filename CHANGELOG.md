@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-02-27
+
+### Changed
+- **Architectural Modernization (Phase 1 & 2)**:
+  - **Robust XML Parsing**: Integrated `fast-xml-parser` for reliable SVN log processing, replacing fragile regex-based parsing.
+  - **Repository Pattern**: Introduced `SvnRepository` to centralize state management (commits, filters, pagination).
+  - **Dependency Injection**: Implemented a central `SvnContext` to manage service lifecycles and decoupling.
+  - **Command Pattern**: Extracted UI actions into dedicated command modules (`HistoryCommands`, `FileCommands`, `AnnotateCommands`).
+  - **Simplified Entry Point**: Refactored `extension.ts` to reduce complexity and improve maintainability.
+  - **Centralized Path Logic**: Created `PathUtils` to handle consistent SVN-to-FS path conversions and prefix cleaning.
+
 ## [1.2.0] - 2026-02-27
 
 ### Added
