@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { SvnContext } from './utils/SvnContext';
 import { HistoryCommands } from './commands/HistoryCommands';
 import { FileCommands } from './commands/FileCommands';
@@ -31,11 +32,14 @@ export function activate(context: vscode.ExtensionContext): void {
         const total = svnContext.repository.commits.length;
         const count = svnContext.repository.filteredCommits.length;
         const filtered = svnContext.repository.isFiltered;
+        const fileFilter = svnContext.repository.fileFilter;
 
         vscode.commands.executeCommand('setContext', 'svn-ij-history:isFiltered', filtered);
 
         svnContext.historyView.title = 'History';
-        svnContext.historyView.description = filtered ? `${count} of ${total} commits` : `${total} commits`;
+        const commitInfo = filtered ? `${count} of ${total} commits` : `${total} commits`;
+        const fileName = fileFilter ? path.basename(fileFilter) : '';
+        svnContext.historyView.description = fileName ? `${fileName} • ${commitInfo}` : commitInfo;
     };
 
     svnContext.repository.onDidChangeData(() => updateTreeViewDescription());
