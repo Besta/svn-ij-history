@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.3.0] - 2026-03-04
+
+### Added
+- **SVN File Decoration Provider**: Added native file status indicators (Modified, Added, Deleted) directly in the Explorer and editor tabs.
+- **Improved Testing**: Introduced an initial unit testing suite for SVN operations.
+
+### Changed
+- **Service Refactor**: Major re-engineering of `SvnService` for better performance and maintainability.
+- **Architectural Improvements**: Centralized command execution and enhanced error handling across the extension.
+- **Centralized Types**: Defined dedicated interfaces for SVN operations in `SvnInterfaces.ts`.
+
 ## [1.2.1] - 2026-02-27
 
 ### Changed

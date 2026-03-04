@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { SvnService, SvnCommit } from '../utils/SvnService';
+import { SvnCommit } from '../utils/SvnInterfaces';
 import { DateUtils } from '../utils/DateUtils';
 import { SvnRepository } from '../utils/SvnRepository';
 

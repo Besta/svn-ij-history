@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { SvnService, SvnCommit } from '../utils/SvnService';
+import { SvnService } from '../utils/SvnService';
+import { SvnCommit, SvnCommitFile } from '../utils/SvnInterfaces';
 import { PathUtils } from '../utils/PathUtils';
 import * as path from 'path';
 
@@ -16,12 +17,17 @@ export class SvnDetailItem extends vscode.TreeItem {
 
         if (file) {
             const dirPath = PathUtils.getDirPath(file.path);
-            this.description = [file.action, dirPath].filter(Boolean).join(' • ');
+            this.description = dirPath;
             this.tooltip = path.normalize(PathUtils.cleanRepoPath(file.path));
 
             // Construct absolute path for native icons
             const absolutePath = PathUtils.toFsPath(file.path, this.workspaceRoot);
-            this.resourceUri = vscode.Uri.file(absolutePath);
+
+            // Use custom scheme for decorations, while keeping the file path for icons
+            this.resourceUri = vscode.Uri.file(absolutePath).with({
+                scheme: 'svn-ij-history',
+                query: `action=${file.action}`
+            });
 
             this.contextValue = `file-item`;
             this.command = {
@@ -86,7 +92,7 @@ export class SvnDetailsTreeProvider implements vscode.TreeDataProvider<SvnDetail
         }
 
         if (element.contextValue === 'files-header') {
-            return this._commit.files.map(f => {
+            return this._commit.files.map((f: SvnCommitFile) => {
                 const fileName = path.basename(f.path);
                 return new SvnDetailItem(
                     fileName,

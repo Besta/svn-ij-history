@@ -23,6 +23,9 @@ export function activate(context: vscode.ExtensionContext): void {
     new FileCommands(svnContext).register(context);
     new AnnotateCommands(svnContext).register(context);
 
+    // 2.5 Register Decoration Provider
+    context.subscriptions.push(vscode.window.registerFileDecorationProvider(svnContext.decorationProvider));
+
     // 3. UI Status Management
     const updateTreeViewDescription = () => {
         const filtered = svnContext.repository.isFiltered;

@@ -1,39 +1,20 @@
+import * as vscode from 'vscode';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { DateUtils } from './DateUtils';
 import { XMLParser } from 'fast-xml-parser';
+import {
+    SvnCommit,
+    AnnotateLine,
+    SvnLogXml,
+    SvnLogEntryXml,
+    SvnPathXml,
+    SvnInfoXml,
+    SvnAnnotateXml,
+    SvnAnnotateEntryXml
+} from './SvnInterfaces';
 
 const execFileAsync = promisify(execFile);
-
-/**
- * Represents a single SVN commit entry with its metadata and affected files.
- */
-export interface SvnCommit {
-    /** Revision number (e.g., "1234") */
-    rev: string;
-    /** The username of the committer */
-    author: string;
-    /** Original Date object of the commit */
-    date: Date;
-    /** Formatted date string for UI display */
-    displayDate: string;
-    /** The commit message */
-    msg: string;
-    /** Categorization label (e.g., "Today", "Last Week") */
-    groupLabel: string;
-    /** List of files modified, added, or deleted in this revision */
-    files: { action: string; path: string }[];
-}
-
-/**
- * Represents a single line in the SVN annotate output.
- */
-export interface AnnotateLine {
-    line: number;
-    rev: string;
-    author: string;
-    date: Date;
-}
 
 /**
  * Service class to handle Subversion (SVN) CLI operations and XML parsing.
@@ -56,16 +37,30 @@ export class SvnService {
     }
 
     /**
+     * Executes an SVN command and handles errors.
+     */
+    private async executeSvn(args: string[]): Promise<string> {
+        try {
+            const { stdout } = await execFileAsync('svn', args, { cwd: this.workspaceRoot });
+            return stdout;
+        } catch (err: any) {
+            const message = err.stderr || err.message || '';
+            if (message.includes('is not a working copy')) {
+                vscode.window.showWarningMessage('The current folder is not an SVN working copy.');
+            } else {
+                vscode.window.showErrorMessage(`SVN Error: ${message}`);
+            }
+            throw err;
+        }
+    }
+
+    /**
      * Fetches the SVN log history using the command line.
      * @param limit Maximum number of log entries to retrieve.
      * @returns A promise resolving to an array of SvnCommit objects.
      */
     public async getHistory(limit: number = 50): Promise<SvnCommit[]> {
-        const { stdout } = await execFileAsync(
-            'svn',
-            ['log', '--limit', String(limit), '--xml', '--verbose'],
-            { cwd: this.workspaceRoot }
-        );
+        const stdout = await this.executeSvn(['log', '--limit', String(limit), '--xml', '--verbose']);
         return this.parseXml(stdout);
     }
 
@@ -75,11 +70,7 @@ export class SvnService {
      * @param limit Maximum number of log entries to retrieve.
      */
     public async getFileHistory(absoluteFilePath: string, limit: number = 50): Promise<SvnCommit[]> {
-        const { stdout } = await execFileAsync(
-            'svn',
-            ['log', '--limit', String(limit), '--xml', '--verbose', absoluteFilePath],
-            { cwd: this.workspaceRoot }
-        );
+        const stdout = await this.executeSvn(['log', '--limit', String(limit), '--xml', '--verbose', absoluteFilePath]);
         return this.parseXml(stdout);
     }
 
@@ -87,11 +78,7 @@ export class SvnService {
      * Fetches details for a specific revision.
      */
     public async getCommit(rev: string): Promise<SvnCommit | undefined> {
-        const { stdout } = await execFileAsync(
-            'svn',
-            ['log', '-r', rev, '--xml', '--verbose'],
-            { cwd: this.workspaceRoot }
-        );
+        const stdout = await this.executeSvn(['log', '-r', rev, '--xml', '--verbose']);
         const commits = this.parseXml(stdout);
         return commits.length > 0 ? commits[0] : undefined;
     }
@@ -100,12 +87,7 @@ export class SvnService {
      * Retrieves the text content of a specific file at a specific revision.
      */
     public async getFileContent(repoUrl: string, rev: string): Promise<string> {
-        const { stdout } = await execFileAsync(
-            'svn',
-            ['cat', `${repoUrl}@${rev}`],
-            { cwd: this.workspaceRoot }
-        );
-        return stdout;
+        return this.executeSvn(['cat', `${repoUrl}@${rev}`]);
     }
 
     /**
@@ -115,8 +97,8 @@ export class SvnService {
         if (this._repoRootCache !== undefined) {
             return this._repoRootCache;
         }
-        const { stdout } = await execFileAsync('svn', ['info', '--xml'], { cwd: this.workspaceRoot });
-        const jsonObj = this._parser.parse(stdout);
+        const stdout = await this.executeSvn(['info', '--xml']);
+        const jsonObj = this._parser.parse(stdout) as SvnInfoXml;
         this._repoRootCache = jsonObj?.info?.entry?.repository?.root || '';
         return this._repoRootCache || '';
     }
@@ -125,11 +107,7 @@ export class SvnService {
      * Fetches the annotate information for a file.
      */
     public async getFileAnnotate(absoluteFilePath: string): Promise<AnnotateLine[]> {
-        const { stdout } = await execFileAsync(
-            'svn',
-            ['annotate', '--xml', absoluteFilePath],
-            { cwd: this.workspaceRoot }
-        );
+        const stdout = await this.executeSvn(['annotate', '--xml', absoluteFilePath]);
         return this.parseAnnotateXml(stdout);
     }
 
@@ -137,13 +115,13 @@ export class SvnService {
      * Parses SVN XML log output into SvnCommit objects.
      */
     private parseXml(xml: string): SvnCommit[] {
-        const jsonObj = this._parser.parse(xml);
+        const jsonObj = this._parser.parse(xml) as SvnLogXml;
         const logentries = jsonObj?.log?.logentry;
         if (!logentries) { return []; }
 
         const entries = Array.isArray(logentries) ? logentries : [logentries];
 
-        return entries.map((entry: any) => {
+        return entries.map((entry: SvnLogEntryXml) => {
             const rev = String(entry.revision);
             const author = entry.author || 'No author';
             const dateStr = entry.date || '';
@@ -155,7 +133,7 @@ export class SvnService {
 
             if (paths) {
                 const pathList = Array.isArray(paths) ? paths : [paths];
-                pathList.forEach((p: any) => {
+                pathList.forEach((p: SvnPathXml) => {
                     files.push({
                         action: p.action,
                         path: p['#text'] || p.toString()
@@ -179,15 +157,15 @@ export class SvnService {
      * Parses SVN XML annotate output.
      */
     private parseAnnotateXml(xml: string): AnnotateLine[] {
-        const jsonObj = this._parser.parse(xml);
+        const jsonObj = this._parser.parse(xml) as SvnAnnotateXml;
         const entries = jsonObj?.blame?.target?.entry;
         if (!entries) { return []; }
 
         const entryList = Array.isArray(entries) ? entries : [entries];
 
-        return entryList.map((entry: any) => {
+        return entryList.map((entry: SvnAnnotateEntryXml) => {
             return {
-                line: parseInt(entry['line-number']),
+                line: Number(entry['line-number']),
                 rev: String(entry.commit?.revision),
                 author: entry.commit?.author || 'No author',
                 date: new Date(entry.commit?.date)

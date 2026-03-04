@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { SvnService, SvnCommit } from './SvnService';
+import { SvnService } from './SvnService';
+import { SvnCommit } from './SvnInterfaces';
 
 /**
  * Manages the state of SVN history, including the loaded commits,

@@ -4,6 +4,7 @@ import { SvnRepository } from './SvnRepository';
 import { AnnotateDecorator } from '../decorators/AnnotateDecorator';
 import { SvnHistoryTreeProvider } from '../providers/SvnHistoryTreeProvider';
 import { SvnDetailsTreeProvider } from '../providers/SvnDetailsTreeProvider';
+import { SvnFileDecorationProvider } from '../providers/SvnFileDecorationProvider';
 
 /**
  * Dependency Injection container for the extension.
@@ -15,6 +16,7 @@ export class SvnContext implements vscode.Disposable {
     public readonly annotateDecorator: AnnotateDecorator;
     public readonly historyProvider: SvnHistoryTreeProvider;
     public readonly detailsProvider: SvnDetailsTreeProvider;
+    public readonly decorationProvider: SvnFileDecorationProvider;
     public readonly historyView: vscode.TreeView<any>;
     public readonly detailsView: vscode.TreeView<any>;
 
@@ -27,6 +29,7 @@ export class SvnContext implements vscode.Disposable {
         this.annotateDecorator = new AnnotateDecorator(this.svnService);
         this.historyProvider = new SvnHistoryTreeProvider(this.repository);
         this.detailsProvider = new SvnDetailsTreeProvider(this.svnService);
+        this.decorationProvider = new SvnFileDecorationProvider();
 
         this.historyView = vscode.window.createTreeView('svn-ij-history.history-tree', {
             treeDataProvider: this.historyProvider

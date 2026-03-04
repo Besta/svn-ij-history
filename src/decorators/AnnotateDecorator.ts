@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { SvnService, AnnotateLine } from '../utils/SvnService';
+import { SvnService } from '../utils/SvnService';
+import { AnnotateLine } from '../utils/SvnInterfaces';
 
 /**
  * Manages SVN Annotate decorations in the editor gutter.
