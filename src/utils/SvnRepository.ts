@@ -8,7 +8,7 @@ import { SvnCommit } from './SvnInterfaces';
  */
 export class SvnRepository {
     private _commits: SvnCommit[] = [];
-    private _limit: number = 50;
+    private _limit: number = 200;
     private _fileFilter?: string;
     private _searchValue: string = '';
 
@@ -38,7 +38,7 @@ export class SvnRepository {
     }
 
     public async refresh(): Promise<void> {
-        this._limit = 50;
+        this._limit = 200;
         await this.loadCommits();
     }
 
@@ -49,7 +49,7 @@ export class SvnRepository {
 
     public async showFileHistory(absoluteFilePath: string): Promise<void> {
         this._fileFilter = absoluteFilePath;
-        this._limit = 50;
+        this._limit = 200;
         await this.loadCommits();
     }
 
@@ -61,7 +61,7 @@ export class SvnRepository {
     public clearFilters(): void {
         this._fileFilter = undefined;
         this._searchValue = '';
-        this._limit = 50;
+        this._limit = 200;
         this.loadCommits();
     }
 

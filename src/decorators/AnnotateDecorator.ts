@@ -52,12 +52,36 @@ export class AnnotateDecorator {
         try {
             let annotateData = this._cache.get(fsPath);
             if (!annotateData) {
-                annotateData = await this._svnService.getFileAnnotate(fsPath);
+                annotateData = await vscode.window.withProgress({
+                    location: vscode.ProgressLocation.Notification,
+                    title: "SVN History: Fetching Annotations...",
+                    cancellable: false
+                }, async () => {
+                    return await this._svnService.getFileAnnotate(fsPath);
+                });
                 this._cache.set(fsPath, annotateData);
             }
 
-            // Organize decorations by author to apply specific colors
-            const decorationsByAuthor: Map<string, vscode.DecorationOptions[]> = new Map();
+            // Organize decorations by revision to apply specific colors based on date rank
+            const revisions = Array.from(new Set(annotateData.map(b => b.rev))).sort((a, b) => {
+                const dateA = annotateData.find(d => d.rev === a)?.date.getTime() || 0;
+                const dateB = annotateData.find(d => d.rev === b)?.date.getTime() || 0;
+                return dateA - dateB; // Oldest first
+            });
+
+            const revCount = revisions.length;
+            const revToDecType: Map<string, vscode.TextEditorDecorationType> = new Map();
+            const revToDecorations: Map<string, vscode.DecorationOptions[]> = new Map();
+
+            // Calculate max lengths for fixed-width formatting
+            let maxRevLen = 0;
+            let maxAuthorLen = 0;
+            annotateData.forEach(b => {
+                const rev = (b.rev === '0' || !b.rev) ? '' : b.rev;
+                const author = (b.rev === '0' || !b.rev) ? '' : b.author;
+                if (rev.length > maxRevLen) maxRevLen = rev.length;
+                if (author.length > maxAuthorLen) maxAuthorLen = author.length;
+            });
 
             annotateData.forEach((b) => {
                 const lineIndex = b.line - 1;
@@ -65,22 +89,52 @@ export class AnnotateDecorator {
 
                 const range = new vscode.Range(lineIndex, 0, lineIndex, 0);
 
-                // Format Date: dd/mm/yy
-                const d = b.date;
-                const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).substring(2)}`;
+                const isUncommitted = b.rev === '0' || !b.rev;
 
-                // Format: 123 Author dd/mm/yy
-                const contentText = `${b.rev} ${b.author} ${dateStr}`;
-
-                if (!decorationsByAuthor.has(b.author)) {
-                    decorationsByAuthor.set(b.author, []);
+                // Format Date: dd/mm/yy or 8 non-breaking spaces for uncommitted
+                let dateStr = '\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0';
+                if (!isUncommitted && b.date.getTime() > 0) {
+                    const d = b.date;
+                    dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).substring(2)}`;
                 }
 
-                const hover = new vscode.MarkdownString(`### r${b.rev}\n\n**Author:** ${b.author}\n\n**Date:** ${b.date.toLocaleString()}\n\n[➜ Show Details in History Panel](command:svn-ij-history.openCommitDetails?${encodeURIComponent(JSON.stringify([b.rev]))})`);
+                const revText = (isUncommitted ? ''.padEnd(maxRevLen, '\u00a0') : b.rev).padEnd(maxRevLen + 1, '\u00a0');
+                const authorText = (isUncommitted ? ''.padEnd(maxAuthorLen, '\u00a0') : b.author).padEnd(maxAuthorLen + 1, '\u00a0');
+
+                // Format: 123 Author dd/mm/yy (with fixed padding)
+                const contentText = `${revText}${authorText}${dateStr}`;
+
+                const revIndex = revisions.indexOf(b.rev);
+                let opacity = 1.0;
+                if (revCount > 1) {
+                    // Linear scale from 0.2 to 1.0 (refined from 0.1)
+                    opacity = 0.2 + (0.8 * (revIndex / (revCount - 1)));
+                }
+
+                if (isUncommitted) opacity = 0.5; // Neutral for uncommitted
+
+                if (!revToDecType.has(b.rev)) {
+                    // VS Code Blue: #007acc is a good approximation of the classic blue
+                    const color = isUncommitted ? 'var(--vscode-editorCodeLens-foreground)' : `rgba(0, 122, 204, ${opacity.toFixed(2)})`;
+                    const decType = vscode.window.createTextEditorDecorationType({
+                        before: {
+                            margin: '0 1.5em 0 0',
+                            color: color,
+                            fontWeight: 'normal'
+                        },
+                        rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen
+                    });
+                    revToDecType.set(b.rev, decType);
+                    revToDecorations.set(b.rev, []);
+                    this._authorDecorationTypes.set(`rev-${b.rev}`, decType); // Repurpose existing map for cleanup
+                }
+
+                const hover = isUncommitted ? new vscode.MarkdownString('**Uncommitted Change**') :
+                    new vscode.MarkdownString(`### r${b.rev}\n\n**Author:** ${b.author}\n\n**Date:** ${b.date.toLocaleString()}\n\n[➜ Show Details in History Panel](command:svn-ij-history.openCommitDetails?${encodeURIComponent(JSON.stringify([b.rev]))})`);
                 hover.isTrusted = true;
                 hover.supportHtml = true;
 
-                decorationsByAuthor.get(b.author)!.push({
+                revToDecorations.get(b.rev)!.push({
                     range,
                     hoverMessage: hover,
                     renderOptions: {
@@ -91,49 +145,16 @@ export class AnnotateDecorator {
                 });
             });
 
-            // Apply decorations for each author
-            decorationsByAuthor.forEach((decs, author) => {
-                const decType = this.getAuthorDecorationType(author);
-                editor.setDecorations(decType, decs);
+            // Apply decorations once per revision
+            revToDecorations.forEach((decs, rev) => {
+                const decType = revToDecType.get(rev);
+                if (decType) {
+                    editor.setDecorations(decType, decs);
+                }
             });
         } catch (err) {
             console.error('Annotate Error:', err);
         }
-    }
-
-    /**
-     * Gets or creates a decoration type for a specific author with a unique color.
-     */
-    private getAuthorDecorationType(author: string): vscode.TextEditorDecorationType {
-        if (this._authorDecorationTypes.has(author)) {
-            return this._authorDecorationTypes.get(author)!;
-        }
-
-        // Generate a consistent color based on author name hash
-        const hash = this.getHash(author);
-        const hue = hash % 360;
-        // Saturation 45%, Lightness 50% for good contrast
-        const color = `hsl(${hue}, 45%, 50%)`;
-
-        const decType = vscode.window.createTextEditorDecorationType({
-            before: {
-                margin: '0 1.5em 0 0',
-                color: color,
-                fontWeight: 'normal'
-            },
-            rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen
-        });
-
-        this._authorDecorationTypes.set(author, decType);
-        return decType;
-    }
-
-    private getHash(str: string): number {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        return Math.abs(hash);
     }
 
     /**

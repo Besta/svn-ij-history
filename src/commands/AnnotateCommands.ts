@@ -6,30 +6,20 @@ export class AnnotateCommands {
 
     public register(context: vscode.ExtensionContext) {
         context.subscriptions.push(
-            vscode.commands.registerCommand('svn-ij-history.toggleAnnotate', async (arg?: any) => {
+            vscode.commands.registerCommand('svn-ij-history.toggleAnnotate', async () => {
                 const editor = vscode.window.activeTextEditor;
-                let targetUri: vscode.Uri | undefined;
-
-                if (arg instanceof vscode.Uri) {
-                    targetUri = arg;
-                } else if (arg && typeof arg === 'object' && arg.uri instanceof vscode.Uri) {
-                    targetUri = arg.uri;
-                } else {
-                    targetUri = editor?.document.uri;
-                }
-
-                if (targetUri && targetUri.scheme === 'file') {
-                    await this.context.annotateDecorator.toggleAnnotate(targetUri);
+                if (editor && editor.document.uri.scheme === 'file') {
+                    await this.context.annotateDecorator.toggleAnnotate(editor.document.uri);
                     this.updateAnnotateContext(editor);
                 } else {
-                    vscode.window.showErrorMessage('Please open a local file to use SVN Annotate.');
+                    vscode.window.showErrorMessage('Please focus a local file to use SVN Annotate.');
                 }
             }),
-            vscode.commands.registerCommand('svn-ij-history.showAnnotate', (uri?: vscode.Uri) => {
-                return vscode.commands.executeCommand('svn-ij-history.toggleAnnotate', uri);
+            vscode.commands.registerCommand('svn-ij-history.showAnnotate', () => {
+                return vscode.commands.executeCommand('svn-ij-history.toggleAnnotate');
             }),
-            vscode.commands.registerCommand('svn-ij-history.hideAnnotate', (uri?: vscode.Uri) => {
-                return vscode.commands.executeCommand('svn-ij-history.toggleAnnotate', uri);
+            vscode.commands.registerCommand('svn-ij-history.hideAnnotate', () => {
+                return vscode.commands.executeCommand('svn-ij-history.toggleAnnotate');
             })
         );
 
@@ -42,6 +32,9 @@ export class AnnotateCommands {
                 }
             })
         );
+
+        // Initial update
+        this.updateAnnotateContext(vscode.window.activeTextEditor);
     }
 
     private updateAnnotateContext(editor?: vscode.TextEditor) {

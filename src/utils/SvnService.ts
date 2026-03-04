@@ -5,6 +5,7 @@ import { DateUtils } from './DateUtils';
 import { XMLParser } from 'fast-xml-parser';
 import {
     SvnCommit,
+    SvnCommitFile,
     AnnotateLine,
     SvnLogXml,
     SvnLogEntryXml,
@@ -129,14 +130,15 @@ export class SvnService {
             const date = new Date(dateStr);
 
             const paths = entry.paths?.path;
-            const files: { action: string; path: string }[] = [];
+            const files: SvnCommitFile[] = [];
 
             if (paths) {
                 const pathList = Array.isArray(paths) ? paths : [paths];
                 pathList.forEach((p: SvnPathXml) => {
                     files.push({
                         action: p.action,
-                        path: p['#text'] || p.toString()
+                        path: p['#text'] || p.toString(),
+                        kind: p.kind
                     });
                 });
             }
@@ -164,11 +166,17 @@ export class SvnService {
         const entryList = Array.isArray(entries) ? entries : [entries];
 
         return entryList.map((entry: SvnAnnotateEntryXml) => {
+            const commit = entry.commit;
+            const rev = commit?.revision ? String(commit.revision) : '0';
+            const author = commit?.author || (rev === '0' ? '' : 'No author');
+            const dateStr = commit?.date;
+            const date = dateStr ? new Date(dateStr) : new Date(0);
+
             return {
                 line: Number(entry['line-number']),
-                rev: String(entry.commit?.revision),
-                author: entry.commit?.author || 'No author',
-                date: new Date(entry.commit?.date)
+                rev,
+                author,
+                date
             };
         });
     }

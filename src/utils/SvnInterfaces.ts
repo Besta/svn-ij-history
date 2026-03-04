@@ -21,6 +21,7 @@ export interface SvnCommit {
 export interface SvnCommitFile {
     action: string;
     path: string;
+    kind?: string;
 }
 
 /**
@@ -54,6 +55,7 @@ export interface SvnLogEntryXml {
 
 export interface SvnPathXml {
     action: string;
+    kind?: string;
     '#text': string;
 }
 

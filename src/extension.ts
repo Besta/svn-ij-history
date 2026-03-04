@@ -28,14 +28,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // 3. UI Status Management
     const updateTreeViewDescription = () => {
-        const filtered = svnContext.repository.isFiltered;
-        vscode.commands.executeCommand('setContext', 'svn-ij-history:isFiltered', filtered);
-
         const total = svnContext.repository.commits.length;
         const count = svnContext.repository.filteredCommits.length;
+        const filtered = svnContext.repository.isFiltered;
 
-        let desc = filtered ? `${count} of ${total} commits` : `${total} commits`;
-        svnContext.historyView.description = desc;
+        vscode.commands.executeCommand('setContext', 'svn-ij-history:isFiltered', filtered);
+
+        svnContext.historyView.title = 'History';
+        svnContext.historyView.description = filtered ? `${count} of ${total} commits` : `${total} commits`;
     };
 
     svnContext.repository.onDidChangeData(() => updateTreeViewDescription());
@@ -50,6 +50,12 @@ export function activate(context: vscode.ExtensionContext): void {
             const item = e.selection[0];
             if (item.commit) {
                 vscode.commands.executeCommand('svn-ij-history.openCommitDetails', item.commit.rev);
+            } else if (item.isLoadMore) {
+                vscode.commands.executeCommand('svn-ij-history.loadMore');
+                // Clear selection to allow immediate repeat clicks
+                setTimeout(() => {
+                    (svnContext.historyView as any).selection = [];
+                }, 100);
             }
         }
     });

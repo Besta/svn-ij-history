@@ -10,7 +10,7 @@ export class SvnDetailItem extends vscode.TreeItem {
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly contextValue: string,
         private readonly workspaceRoot: string,
-        public readonly file?: { action: string; path: string; rev: string },
+        public readonly file?: { action: string; path: string; rev: string; kind?: string },
         public readonly revNumber?: string
     ) {
         super(label, collapsibleState);
@@ -29,12 +29,21 @@ export class SvnDetailItem extends vscode.TreeItem {
                 query: `action=${file.action}`
             });
 
-            this.contextValue = `file-item`;
-            this.command = {
-                command: 'svn-ij-history.openDiff',
-                title: 'Open Diff',
-                arguments: [this]
-            };
+            this.contextValue = file.kind === 'dir' ? 'dir-item' : 'file-item';
+
+            if (this.contextValue === 'file-item') {
+                this.command = {
+                    command: 'svn-ij-history.openDiff',
+                    title: 'Open Diff',
+                    arguments: [this]
+                };
+            } else if (this.contextValue === 'dir-item') {
+                this.command = {
+                    command: 'svn-ij-history.openLocal',
+                    title: 'Open Directory',
+                    arguments: [this]
+                };
+            }
         }
     }
 }
@@ -97,7 +106,7 @@ export class SvnDetailsTreeProvider implements vscode.TreeDataProvider<SvnDetail
                 return new SvnDetailItem(
                     fileName,
                     vscode.TreeItemCollapsibleState.None,
-                    'file-item',
+                    'file-item', // This is overridden in constructor if file info is present
                     this.svnService.workspaceRoot,
                     { ...f, rev: this._commit!.rev }
                 );

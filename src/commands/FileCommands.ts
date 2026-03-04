@@ -86,20 +86,28 @@ export class FileCommands {
             }),
             vscode.commands.registerCommand('svn-ij-history.openLocal', async (item: SvnDetailItem) => {
                 if (!item.file) return;
-                const absolutePath = PathUtils.toFsPath(item.file.path, this.context.workspaceRoot);
+                let absolutePath = PathUtils.toFsPath(item.file.path, this.context.workspaceRoot);
 
-                if (fs.existsSync(absolutePath)) {
-                    const uri = vscode.Uri.file(absolutePath);
-                    await vscode.window.showTextDocument(uri);
-                } else {
+                if (!fs.existsSync(absolutePath)) {
                     const targetName = item.file.path.split('/').pop();
                     if (targetName) {
                         const files = await vscode.workspace.findFiles(`**/${targetName}`, '**/node_modules/**', 1);
                         if (files.length > 0) {
-                            await vscode.window.showTextDocument(files[0]);
+                            absolutePath = files[0].fsPath;
                         } else {
-                            vscode.window.showErrorMessage('Could not find the file in the local workspace.');
+                            vscode.window.showErrorMessage('Could not find the file/directory in the local workspace.');
+                            return;
                         }
+                    }
+                }
+
+                if (fs.existsSync(absolutePath)) {
+                    const uri = vscode.Uri.file(absolutePath);
+                    const isDir = fs.statSync(absolutePath).isDirectory();
+                    if (isDir) {
+                        await vscode.commands.executeCommand('revealInExplorer', uri);
+                    } else {
+                        await vscode.window.showTextDocument(uri);
                     }
                 }
             }),

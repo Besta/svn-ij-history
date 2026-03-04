@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.3.2] - 2026-03-04
+
+### Added
+- Date-based coloring for annotations: recent commits are now more vibrant (100% blue) while older ones fade out (20% minimum opacity).
+- Fixed-width annotations in the gutter for better alignment.
+- Uncommitted lines now show empty annotations for a cleaner look.
+- Loading notification when fetching file annotations.
+- Increased initial commit loading to 200.
+
+### Fixed
+- Fixed "Load More" button functionality in history tree.
+- Improved "History" panel title visibility: the commit count now shows up immediately without needing focus.
+- Restricted "Compare with Previous Version" action in the detail panel to individual files only (hidden for directories).
+- Fixed directory navigation: "Open File" now correctly reveals directories in the Explorer sidebar.
+- Improved "History" panel visibility: the header and commit count (e.g., "History 200 commits") now remain visible at all times by preserving the panel's multi-view layout.
+- Improved "Load More" responsiveness with a more robust single-click interaction.
+- Fixed an issue where some lines were missing annotations.
+
 ## [1.3.1] - 2026-03-04
 
 ### Fixed

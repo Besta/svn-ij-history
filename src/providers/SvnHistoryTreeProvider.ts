@@ -83,7 +83,12 @@ export class SvnHistoryTreeProvider implements vscode.TreeDataProvider<SvnTreeIt
                 new SvnTreeItem(label, vscode.TreeItemCollapsibleState.Expanded)
             );
 
-            items.push(new SvnTreeItem('Load 50 more...', vscode.TreeItemCollapsibleState.None, undefined, true));
+            const loadMoreItem = new SvnTreeItem('Load 50 more...', vscode.TreeItemCollapsibleState.None, undefined, true);
+            loadMoreItem.command = {
+                command: 'svn-ij-history.loadMore',
+                title: 'Load More Commits'
+            };
+            items.push(loadMoreItem);
             return items;
         }
 
