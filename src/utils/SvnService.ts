@@ -60,8 +60,12 @@ export class SvnService {
      * @param limit Maximum number of log entries to retrieve.
      * @returns A promise resolving to an array of SvnCommit objects.
      */
-    public async getHistory(limit: number = 50): Promise<SvnCommit[]> {
-        const stdout = await this.executeSvn(['log', '--limit', String(limit), '--xml', '--verbose']);
+    public async getHistory(limit: number = 50, revisionRange?: string): Promise<SvnCommit[]> {
+        const args = ['log', '--limit', String(limit), '--xml', '--verbose'];
+        if (revisionRange) {
+            args.push('-r', revisionRange);
+        }
+        const stdout = await this.executeSvn(args);
         return this.parseXml(stdout);
     }
 
@@ -70,8 +74,13 @@ export class SvnService {
      * @param absoluteFilePath The absolute path of the file on disk.
      * @param limit Maximum number of log entries to retrieve.
      */
-    public async getFileHistory(absoluteFilePath: string, limit: number = 50): Promise<SvnCommit[]> {
-        const stdout = await this.executeSvn(['log', '--limit', String(limit), '--xml', '--verbose', absoluteFilePath]);
+    public async getFileHistory(absoluteFilePath: string, limit: number = 50, revisionRange?: string): Promise<SvnCommit[]> {
+        const args = ['log', '--limit', String(limit), '--xml', '--verbose'];
+        if (revisionRange) {
+            args.push('-r', revisionRange);
+        }
+        args.push(absoluteFilePath);
+        const stdout = await this.executeSvn(args);
         return this.parseXml(stdout);
     }
 

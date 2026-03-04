@@ -39,6 +39,79 @@ export class HistoryCommands {
                     this.context.repository.setSearchValue(selected);
                 }
             }),
+            vscode.commands.registerCommand('svn-ij-history.filterDate', async () => {
+                const options = [
+                    { label: 'Select Date...', description: 'Show history for a single day (DD/MM/YYYY)' },
+                    { label: 'Select Range...', description: 'Show history between two dates' },
+                    { label: 'Clear Date Filter', description: 'Show all history' }
+                ];
+
+                const selected = await vscode.window.showQuickPick(options, {
+                    placeHolder: 'Filter commits by date'
+                });
+
+                if (!selected) return;
+
+                if (selected.label === 'Clear Date Filter') {
+                    this.context.repository.setDateFilter(undefined, undefined);
+                    return;
+                }
+
+                if (selected.label === 'Select Date...') {
+                    const parseDate = (s: string) => {
+                        const [d, m, y] = s.split('/').map(Number);
+                        return new Date(y, m - 1, d);
+                    };
+
+                    const dateStr = await vscode.window.showInputBox({
+                        placeHolder: 'DD/MM/YYYY',
+                        prompt: 'Enter date to filter history',
+                        validateInput: (val) => {
+                            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(val)) return 'Invalid format. Use DD/MM/YYYY';
+                            const [d, m, y] = val.split('/').map(Number);
+                            const date = new Date(y, m - 1, d);
+                            return isNaN(date.getTime()) ? 'Invalid date' : null;
+                        }
+                    });
+                    if (dateStr) {
+                        const date = parseDate(dateStr);
+                        this.context.repository.setDateFilter(date, date);
+                    }
+                } else if (selected.label === 'Select Range...') {
+                    const parseDate = (s: string) => {
+                        const [d, m, y] = s.split('/').map(Number);
+                        return new Date(y, m - 1, d);
+                    };
+
+                    const startStr = await vscode.window.showInputBox({
+                        placeHolder: 'DD/MM/YYYY',
+                        prompt: 'Enter START date (DD/MM/YYYY)',
+                        validateInput: (val) => {
+                            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(val)) return 'Invalid format. Use DD/MM/YYYY';
+                            const [d, m, y] = val.split('/').map(Number);
+                            const date = new Date(y, m - 1, d);
+                            return isNaN(date.getTime()) ? 'Invalid date' : null;
+                        }
+                    });
+                    if (!startStr) return;
+
+                    const endStr = await vscode.window.showInputBox({
+                        placeHolder: 'DD/MM/YYYY',
+                        prompt: 'Enter END date (DD/MM/YYYY)',
+                        validateInput: (val) => {
+                            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(val)) return 'Invalid format. Use DD/MM/YYYY';
+                            const [d, m, y] = val.split('/').map(Number);
+                            const endDate = new Date(y, m - 1, d);
+                            if (isNaN(endDate.getTime())) return 'Invalid date';
+                            if (endDate < parseDate(startStr)) return 'End date must be after start date';
+                            return null;
+                        }
+                    });
+                    if (endStr) {
+                        this.context.repository.setDateFilter(parseDate(startStr), parseDate(endStr));
+                    }
+                }
+            }),
             vscode.commands.registerCommand('svn-ij-history.showFileHistory', async (fileUri?: vscode.Uri) => {
                 const targetUri = fileUri || vscode.window.activeTextEditor?.document.uri;
                 if (targetUri && targetUri.scheme === 'file') {

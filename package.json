@@ -87,6 +87,12 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "svn-ij-history.filterDate",
+        "title": "Filter by Date",
+        "category": "SVN History",
+        "icon": "$(calendar)"
+      },
+      {
         "command": "svn-ij-history.showFileHistory",
         "title": "Show History",
         "category": "SVN History",
@@ -177,9 +183,14 @@
           "group": "navigation@2"
         },
         {
-          "command": "svn-ij-history.refresh",
+          "command": "svn-ij-history.filterDate",
           "when": "view == svn-ij-history.history-tree",
           "group": "navigation@3"
+        },
+        {
+          "command": "svn-ij-history.refresh",
+          "when": "view == svn-ij-history.history-tree",
+          "group": "navigation@4"
         }
       ],
       "explorer/context": [

@@ -11,6 +11,8 @@ export class SvnRepository {
     private _limit: number = 200;
     private _fileFilter?: string;
     private _searchValue: string = '';
+    private _startDate?: Date;
+    private _endDate?: Date;
 
     private _onDidChangeData = new vscode.EventEmitter<void>();
     public readonly onDidChangeData = this._onDidChangeData.event;
@@ -21,9 +23,11 @@ export class SvnRepository {
     public get limit(): number { return this._limit; }
     public get fileFilter(): string | undefined { return this._fileFilter; }
     public get searchValue(): string { return this._searchValue; }
+    public get startDate(): Date | undefined { return this._startDate; }
+    public get endDate(): Date | undefined { return this._endDate; }
 
     public get isFiltered(): boolean {
-        return !!this._fileFilter || !!this._searchValue;
+        return !!this._fileFilter || !!this._searchValue || !!this._startDate || !!this._endDate;
     }
 
     public get filteredCommits(): SvnCommit[] {
@@ -58,18 +62,46 @@ export class SvnRepository {
         this._onDidChangeData.fire();
     }
 
+    public setDateFilter(start?: Date, end?: Date): void {
+        this._startDate = start;
+        this._endDate = end;
+        this._limit = 200;
+        this.loadCommits();
+    }
+
     public clearFilters(): void {
         this._fileFilter = undefined;
         this._searchValue = '';
+        this._startDate = undefined;
+        this._endDate = undefined;
         this._limit = 200;
         this.loadCommits();
     }
 
     private async loadCommits(): Promise<void> {
         try {
+            let revisionRange: string | undefined;
+            if (this._startDate) {
+                const formatDate = (d: Date) => {
+                    const year = d.getFullYear();
+                    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                    const day = d.getDate().toString().padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+                const startStr = `{${formatDate(this._startDate)}}`;
+                if (this._endDate) {
+                    const nextDay = new Date(this._endDate);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    revisionRange = `{${formatDate(nextDay)}}:{${formatDate(this._startDate)}}`;
+                } else {
+                    // From HEAD to startDate
+                    revisionRange = `HEAD:{${formatDate(this._startDate)}}`;
+                }
+            }
+
             this._commits = this._fileFilter
-                ? await this.svnService.getFileHistory(this._fileFilter, this._limit)
-                : await this.svnService.getHistory(this._limit);
+                ? await this.svnService.getFileHistory(this._fileFilter, this._limit, revisionRange)
+                : await this.svnService.getHistory(this._limit, revisionRange);
             this._onDidChangeData.fire();
         } catch (err) {
             console.error('Failed to load SVN history', err);

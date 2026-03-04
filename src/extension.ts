@@ -33,13 +33,34 @@ export function activate(context: vscode.ExtensionContext): void {
         const count = svnContext.repository.filteredCommits.length;
         const filtered = svnContext.repository.isFiltered;
         const fileFilter = svnContext.repository.fileFilter;
+        const startDate = svnContext.repository.startDate;
+        const endDate = svnContext.repository.endDate;
 
         vscode.commands.executeCommand('setContext', 'svn-ij-history:isFiltered', filtered);
 
         svnContext.historyView.title = 'History';
         const commitInfo = filtered ? `${count} of ${total} commits` : `${total} commits`;
         const fileName = fileFilter ? path.basename(fileFilter) : '';
-        svnContext.historyView.description = fileName ? `${fileName} • ${commitInfo}` : commitInfo;
+
+        // Date info
+        let dateInfo = '';
+        if (startDate) {
+            const formatDate = (d: Date) => {
+                const day = d.getDate().toString().padStart(2, '0');
+                const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+            };
+            dateInfo = (startDate.getTime() === endDate?.getTime())
+                ? `[${formatDate(startDate)}]`
+                : `[${formatDate(startDate)} to ${endDate ? formatDate(endDate) : 'HEAD'}]`;
+        }
+
+        let description = fileName ? `${fileName} • ${commitInfo}` : commitInfo;
+        if (dateInfo) {
+            description = `${dateInfo} ${description}`;
+        }
+        svnContext.historyView.description = description;
     };
 
     svnContext.repository.onDidChangeData(() => updateTreeViewDescription());

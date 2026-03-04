@@ -23,8 +23,11 @@ export class DateUtils {
         if (diffDays < 7) { return "Last Week"; }
         if (diffDays < 30) { return "Last Month"; }
 
-        // Fallback for older dates: e.g., "January 2026"
-        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        // Fallback for older dates: e.g., "01/01/2026"
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}/${m}/${y}`;
     }
 
     /**
@@ -33,13 +36,14 @@ export class DateUtils {
      * @param groupLabel The group label (e.g., "Today").
      */
     public static formatListDate(date: Date, groupLabel: string): string {
+        const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
         if (groupLabel === 'Today' || groupLabel === 'Yesterday') {
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+            return time;
         }
-        return date.toLocaleString('en-US', {
-            month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit', hour12: false
-        });
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}/${m}/${y}, ${time}`;
     }
 
     /**
@@ -48,14 +52,10 @@ export class DateUtils {
      * @returns A formatted string (e.g., "02/26/26, 10:21 AM").
      */
     public static formatDateTime(date: Date): string {
-        return date.toLocaleString('en-US', {
-            day: '2-digit',
-            month: '2-digit',
-            year: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-            hourCycle: 'h23'
-        });
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const y = date.getFullYear();
+        const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        return `${d}/${m}/${y}, ${time}`;
     }
 }
