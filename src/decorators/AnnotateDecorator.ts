@@ -39,13 +39,16 @@ export class AnnotateDecorator {
      * @param editor The target text editor.
      */
     public async updateDecorations(editor?: vscode.TextEditor): Promise<void> {
+        // Always dispose previous decoration types to avoid memory leaks
+        this._authorDecorationTypes.forEach(decType => decType.dispose());
+        this._authorDecorationTypes.clear();
+
         if (!editor) { return; }
 
         const uri = editor.document.uri;
         const fsPath = uri.fsPath;
 
         if (!this._enabledFiles.has(fsPath)) {
-            this.clearDecorations(editor);
             return;
         }
 
@@ -158,14 +161,16 @@ export class AnnotateDecorator {
     }
 
     /**
-     * Removes all blame decorations from an editor.
+     * Removes all blame decorations from an editor and disposes decoration types.
      */
     public clearDecorations(editor?: vscode.TextEditor): void {
-        if (editor) {
-            this._authorDecorationTypes.forEach(decType => {
+        this._authorDecorationTypes.forEach(decType => {
+            if (editor) {
                 editor.setDecorations(decType, []);
-            });
-        }
+            }
+            decType.dispose();
+        });
+        this._authorDecorationTypes.clear();
     }
 
     public dispose(): void {

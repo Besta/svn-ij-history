@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
  * Provides colored status letters (A, M, D) as badges for SVN file entries.
  * Triggered by the 'svn-ij-history' URI scheme.
  */
-export class SvnFileDecorationProvider implements vscode.FileDecorationProvider {
+export class SvnFileDecorationProvider implements vscode.FileDecorationProvider, vscode.Disposable {
     private _onDidChangeFileDecorations: vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined> = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>();
     readonly onDidChangeFileDecorations: vscode.Event<vscode.Uri | vscode.Uri[] | undefined> = this._onDidChangeFileDecorations.event;
 
@@ -54,5 +54,9 @@ export class SvnFileDecorationProvider implements vscode.FileDecorationProvider 
 
     public refresh(uris?: vscode.Uri | vscode.Uri[]): void {
         this._onDidChangeFileDecorations.fire(uris);
+    }
+
+    public dispose(): void {
+        this._onDidChangeFileDecorations.dispose();
     }
 }

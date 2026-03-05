@@ -32,7 +32,7 @@ export class SvnTreeItem extends vscode.TreeItem {
     }
 }
 
-export class SvnHistoryTreeProvider implements vscode.TreeDataProvider<SvnTreeItem> {
+export class SvnHistoryTreeProvider implements vscode.TreeDataProvider<SvnTreeItem>, vscode.Disposable {
     private _onDidChangeTreeData: vscode.EventEmitter<SvnTreeItem | undefined | null | void> = new vscode.EventEmitter<SvnTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<SvnTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
@@ -103,5 +103,9 @@ export class SvnHistoryTreeProvider implements vscode.TreeDataProvider<SvnTreeIt
                 c
             );
         });
+    }
+
+    public dispose(): void {
+        this._onDidChangeTreeData.dispose();
     }
 }

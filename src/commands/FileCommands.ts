@@ -51,9 +51,8 @@ export class FileCommands {
                         vscode.Uri.file(pathCurr),
                         `${fileName} (r${prevRev} ↔ r${rev})`
                     );
-                } catch (err: any) {
+                } catch {
                     // SvnService already handled the UI notification
-                    throw err;
                 }
             }),
             vscode.commands.registerCommand('svn-ij-history.copyRevision', (item: SvnTreeItem | SvnDetailItem) => {
@@ -139,9 +138,8 @@ export class FileCommands {
 
                     fs.writeFileSync(absolutePath, content);
                     vscode.window.showInformationMessage(`Successfully reverted ${path.basename(absolutePath)} to r${rev}`);
-                } catch (err: any) {
+                } catch {
                     // SvnService already handled the UI notification
-                    throw err;
                 }
             })
         );

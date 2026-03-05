@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { execFile } from 'child_process';
 import { SvnContext } from './utils/SvnContext';
 import { HistoryCommands } from './commands/HistoryCommands';
 import { FileCommands } from './commands/FileCommands';
@@ -8,11 +9,25 @@ import { AnnotateCommands } from './commands/AnnotateCommands';
 /**
  * This method is called when your extension is activated.
  */
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 
     if (!workspaceRoot) {
         vscode.window.showErrorMessage('Please open a workspace folder to use SVN History.');
+        return;
+    }
+
+    // Check if svn CLI is available in PATH
+    try {
+        await new Promise<void>((resolve, reject) => {
+            execFile('svn', ['--version', '--quiet'], (err) => {
+                if (err) { reject(err); } else { resolve(); }
+            });
+        });
+    } catch {
+        vscode.window.showErrorMessage(
+            'SVN command-line client not found. Please install SVN and ensure it is in your PATH.'
+        );
         return;
     }
 
@@ -63,27 +78,32 @@ export function activate(context: vscode.ExtensionContext): void {
         svnContext.historyView.description = description;
     };
 
-    svnContext.repository.onDidChangeData(() => updateTreeViewDescription());
+    context.subscriptions.push(
+        svnContext.repository.onDidChangeData(() => updateTreeViewDescription())
+    );
     updateTreeViewDescription(); // Initial update
 
     // Initial state
     vscode.commands.executeCommand('setContext', 'svn-ij-history:hasCommitSelected', false);
 
     // Open details on selection change in history view
-    svnContext.historyView.onDidChangeSelection(e => {
-        if (e.selection.length > 0) {
-            const item = e.selection[0];
-            if (item.commit) {
-                vscode.commands.executeCommand('svn-ij-history.openCommitDetails', item.commit.rev);
-            } else if (item.isLoadMore) {
-                vscode.commands.executeCommand('svn-ij-history.loadMore');
-                // Clear selection to allow immediate repeat clicks
-                setTimeout(() => {
-                    (svnContext.historyView as any).selection = [];
-                }, 100);
+    context.subscriptions.push(
+        svnContext.historyView.onDidChangeSelection(e => {
+            if (e.selection.length > 0) {
+                const item = e.selection[0];
+                if (item.commit) {
+                    vscode.commands.executeCommand('svn-ij-history.openCommitDetails', item.commit.rev);
+                } else if (item.isLoadMore) {
+                    vscode.commands.executeCommand('svn-ij-history.loadMore');
+                    // Clear selection to allow immediate repeat clicks
+                    // Note: TreeView.selection has no public setter, using `as any` as workaround
+                    setTimeout(() => {
+                        (svnContext.historyView as any).selection = [];
+                    }, 100);
+                }
             }
-        }
-    });
+        })
+    );
 }
 
 export function deactivate(): void {

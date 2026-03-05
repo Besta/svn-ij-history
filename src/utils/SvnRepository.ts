@@ -2,17 +2,19 @@ import * as vscode from 'vscode';
 import { SvnService } from './SvnService';
 import { SvnCommit } from './SvnInterfaces';
 
+
 /**
  * Manages the state of SVN history, including the loaded commits,
  * current filters, and pagination.
  */
-export class SvnRepository {
+export class SvnRepository implements vscode.Disposable {
     private _commits: SvnCommit[] = [];
     private _limit: number = 200;
     private _fileFilter?: string;
     private _searchValue: string = '';
     private _startDate?: Date;
     private _endDate?: Date;
+    private _loadPromise?: Promise<void>;
 
     private _onDidChangeData = new vscode.EventEmitter<void>();
     public readonly onDidChangeData = this._onDidChangeData.event;
@@ -62,33 +64,45 @@ export class SvnRepository {
         this._onDidChangeData.fire();
     }
 
-    public setDateFilter(start?: Date, end?: Date): void {
+    public async setDateFilter(start?: Date, end?: Date): Promise<void> {
         this._startDate = start;
         this._endDate = end;
         this._limit = 200;
-        this.loadCommits();
+        await this.loadCommits();
     }
 
-    public clearFilters(): void {
+    public async clearFilters(): Promise<void> {
         this._fileFilter = undefined;
         this._searchValue = '';
         this._startDate = undefined;
         this._endDate = undefined;
         this._limit = 200;
-        this.loadCommits();
+        await this.loadCommits();
     }
 
     private async loadCommits(): Promise<void> {
+        // Guard against concurrent loads — return existing promise if already loading
+        if (this._loadPromise) {
+            return this._loadPromise;
+        }
+        this._loadPromise = this.doLoadCommits();
+        try {
+            await this._loadPromise;
+        } finally {
+            this._loadPromise = undefined;
+        }
+    }
+
+    private async doLoadCommits(): Promise<void> {
         try {
             let revisionRange: string | undefined;
             if (this._startDate) {
-                const formatDate = (d: Date) => {
+                const formatDate = (d: Date): string => {
                     const year = d.getFullYear();
                     const month = (d.getMonth() + 1).toString().padStart(2, '0');
                     const day = d.getDate().toString().padStart(2, '0');
                     return `${year}-${month}-${day}`;
                 };
-                const startStr = `{${formatDate(this._startDate)}}`;
                 if (this._endDate) {
                     const nextDay = new Date(this._endDate);
                     nextDay.setDate(nextDay.getDate() + 1);
@@ -107,6 +121,10 @@ export class SvnRepository {
             console.error('Failed to load SVN history', err);
             throw err;
         }
+    }
+
+    public dispose(): void {
+        this._onDidChangeData.dispose();
     }
 
     public async fetchRecentAuthors(limit: number): Promise<string[]> {

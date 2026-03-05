@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2.0.0] - 2026-03-05
+
+### 🚀 Production-Ready Milestone
+- **Deep Audit & Stability Fixes**:
+  - Fixed critical memory leaks in `AnnotateDecorator` by properly disposing `TextEditorDecorationType`.
+  - Implemented `Disposable` patterns across all tree providers and state managers to prevent `EventEmitter` leaks.
+  - Resolved race conditions in commit loading with a robust request guard.
+  - Fixed un-awaited promises in filtering logic for improved UI reliability.
+  - Added SVN CLI checks at startup to provide helpful guidance if the tool is missing.
+- **New Features**:
+  - **Date Filtering**: Filter the SVN history by single day or date range (DD/MM/YYYY) via new title bar commands.
+  - **Contextual Description**: The history view title now dynamically displays the name of the file being filtered.
+- **Cleanup**:
+  - Removed unused `@vscode/webview-ui-toolkit` dependency to reduce extension load time.
+  - Optimized error logging by removing redundant re-throws.
+
 ## [1.3.2] - 2026-03-04
 
 ### Added

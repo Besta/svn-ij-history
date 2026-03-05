@@ -45,5 +45,9 @@ export class SvnContext implements vscode.Disposable {
         this.historyView.dispose();
         this.detailsView.dispose();
         this.annotateDecorator.dispose();
+        this.historyProvider.dispose();
+        this.detailsProvider.dispose();
+        this.decorationProvider.dispose();
+        this.repository.dispose();
     }
 }
