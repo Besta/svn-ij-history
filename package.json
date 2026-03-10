@@ -2,7 +2,7 @@
   "name": "svn-ij-history",
   "displayName": "SVN IntelliJ-style History",
   "description": "SVN history viewer inspired by IntelliJ with advanced search, timeline grouping, and quick diff.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "publisher": "SimoneBestazza",
   "license": "MIT",
   "repository": {
@@ -158,9 +158,21 @@
         "command": "svn-ij-history.loadMore",
         "title": "Load More Commits",
         "category": "SVN History"
+      },
+      {
+        "command": "svn-ij-history.applyPatch",
+        "title": "Apply Patch",
+        "category": "SVN History",
+        "icon": "$(file-symlink-file)"
       }
     ],
     "menus": {
+      "scm/title": [
+        {
+          "command": "svn-ij-history.applyPatch",
+          "group": "navigation"
+        }
+      ],
       "view/title": [
         {
           "command": "svn-ij-history.clearDetails",

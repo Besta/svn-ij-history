@@ -122,6 +122,14 @@ export class SvnService {
     }
 
     /**
+     * Applies a patch file to the repository.
+     * @param patchFilePath The absolute path to the patch file.
+     */
+    public async applyPatch(patchFilePath: string): Promise<string> {
+        return this.executeSvn(['patch', patchFilePath]);
+    }
+
+    /**
      * Parses SVN XML log output into SvnCommit objects.
      */
     private parseXml(xml: string): SvnCommit[] {

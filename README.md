@@ -25,6 +25,7 @@ Experience a seamless, high-performance UI built entirely on VS Code native comp
 - **Single-Click Workflow**: Simply click a commit to view its details or load more logs instantly.
 - **Quick Diff**: Double-click any file in the details list to open the native VS Code diff editor and compare revisions.
 - **Get Version (Revert)**: Overwrite your local workspace file with a specific revision from history (includes a safety confirmation dialog).
+- **Apply Patch**: Apply local `.patch` or `.diff` files directly to your SVN workspace using the new button in the Source Control panel.
 - **Explorer & Editor Integration**: Right-click any file in the Explorer or Editor tab to view its SVN history.
 
 ### 🔍 Search & Filtering

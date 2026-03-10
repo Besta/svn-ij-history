@@ -130,6 +130,27 @@ export class HistoryCommands {
             vscode.commands.registerCommand('svn-ij-history.clearDetails', () => {
                 vscode.commands.executeCommand('setContext', 'svn-ij-history:hasCommitSelected', false);
                 this.context.detailsProvider.clear();
+            }),
+            vscode.commands.registerCommand('svn-ij-history.applyPatch', async () => {
+                const patchUris = await vscode.window.showOpenDialog({
+                    canSelectMany: false,
+                    openLabel: 'Apply Patch',
+                    filters: {
+                        'Patch files': ['patch', 'diff'],
+                        'All files': ['*']
+                    }
+                });
+
+                if (patchUris && patchUris.length > 0) {
+                    const patchFilePath = patchUris[0].fsPath;
+                    try {
+                        await this.context.svnService.applyPatch(patchFilePath);
+                        vscode.window.showInformationMessage(`Patch applied successfully: ${patchFilePath}`);
+                        vscode.commands.executeCommand('svn-ij-history.refresh');
+                    } catch (err: any) {
+                        vscode.window.showErrorMessage(`Failed to apply patch: ${err.message || err}`);
+                    }
+                }
             })
         );
     }
