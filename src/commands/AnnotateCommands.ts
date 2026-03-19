@@ -30,6 +30,9 @@ export class AnnotateCommands {
                 if (editor) {
                     await this.context.annotateDecorator.updateDecorations(editor);
                 }
+            }),
+            vscode.workspace.onDidChangeTextDocument(event => {
+                this.context.annotateDecorator.handleDocumentChange(event);
             })
         );
 

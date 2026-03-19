@@ -2,6 +2,12 @@ import * as vscode from 'vscode';
 import { SvnService } from '../utils/SvnService';
 import { AnnotateLine } from '../utils/SvnInterfaces';
 
+interface AnnotateState {
+    originalData: AnnotateLine[];
+    originalLinesText: string[];
+    lineMapping: number[];
+}
+
 /**
  * Manages SVN Annotate decorations in the editor gutter.
  * Displays author name and revision on the left side of the code.
@@ -9,7 +15,7 @@ import { AnnotateLine } from '../utils/SvnInterfaces';
 export class AnnotateDecorator {
     private _authorDecorationTypes: Map<string, vscode.TextEditorDecorationType> = new Map();
     private _enabledFiles: Set<string> = new Set();
-    private _cache: Map<string, AnnotateLine[]> = new Map();
+    private _state: Map<string, AnnotateState> = new Map();
 
     constructor(private _svnService: SvnService) { }
 
@@ -39,10 +45,6 @@ export class AnnotateDecorator {
      * @param editor The target text editor.
      */
     public async updateDecorations(editor?: vscode.TextEditor): Promise<void> {
-        // Always dispose previous decoration types to avoid memory leaks
-        this._authorDecorationTypes.forEach(decType => decType.dispose());
-        this._authorDecorationTypes.clear();
-
         if (!editor) { return; }
 
         const uri = editor.document.uri;
@@ -53,22 +55,27 @@ export class AnnotateDecorator {
         }
 
         try {
-            let annotateData = this._cache.get(fsPath);
-            if (!annotateData) {
-                annotateData = await vscode.window.withProgress({
+            let state = this._state.get(fsPath);
+            if (!state) {
+                const annotateData = await vscode.window.withProgress({
                     location: vscode.ProgressLocation.Notification,
                     title: "SVN History: Fetching Annotations...",
                     cancellable: false
                 }, async () => {
                     return await this._svnService.getFileAnnotate(fsPath);
                 });
-                this._cache.set(fsPath, annotateData);
+                state = {
+                    originalData: annotateData,
+                    originalLinesText: editor.document.getText().split(/\r?\n/),
+                    lineMapping: Array.from({length: editor.document.lineCount}, (_, i) => i)
+                };
+                this._state.set(fsPath, state);
             }
 
             // Organize decorations by revision to apply specific colors based on date rank
-            const revisions = Array.from(new Set(annotateData.map(b => b.rev))).sort((a, b) => {
-                const dateA = annotateData.find(d => d.rev === a)?.date.getTime() || 0;
-                const dateB = annotateData.find(d => d.rev === b)?.date.getTime() || 0;
+            const revisions = Array.from(new Set(state.originalData.map(b => b.rev))).sort((a, b) => {
+                const dateA = state!.originalData.find(d => d.rev === a)?.date.getTime() || 0;
+                const dateB = state!.originalData.find(d => d.rev === b)?.date.getTime() || 0;
                 return dateA - dateB; // Oldest first
             });
 
@@ -79,17 +86,28 @@ export class AnnotateDecorator {
             // Calculate max lengths for fixed-width formatting
             let maxRevLen = 0;
             let maxAuthorLen = 0;
-            annotateData.forEach(b => {
+            state.originalData.forEach(b => {
                 const rev = (b.rev === '0' || !b.rev) ? '' : b.rev;
                 const author = (b.rev === '0' || !b.rev) ? '' : b.author;
                 if (rev.length > maxRevLen) maxRevLen = rev.length;
                 if (author.length > maxAuthorLen) maxAuthorLen = author.length;
             });
 
-            annotateData.forEach((b) => {
-                const lineIndex = b.line - 1;
-                if (lineIndex >= editor.document.lineCount) { return; }
+            const originalMap = new Map<number, AnnotateLine>();
+            state.originalData.forEach(b => originalMap.set(b.line - 1, b));
 
+            for (let lineIndex = 0; lineIndex < editor.document.lineCount; lineIndex++) {
+                const origIndex = state.lineMapping[lineIndex];
+                let b: AnnotateLine;
+                if (origIndex !== undefined && origIndex !== -1 && origIndex < state.originalLinesText.length) {
+                    if (editor.document.lineAt(lineIndex).text === state.originalLinesText[origIndex]) {
+                        b = originalMap.get(origIndex) || { rev: '0', author: '', date: new Date(0), line: lineIndex + 1 };
+                    } else {
+                        b = { rev: '0', author: '', date: new Date(0), line: lineIndex + 1 };
+                    }
+                } else {
+                    b = { rev: '0', author: '', date: new Date(0), line: lineIndex + 1 };
+                }
                 const range = new vscode.Range(lineIndex, 0, lineIndex, 0);
 
                 const isUncommitted = b.rev === '0' || !b.rev;
@@ -117,19 +135,21 @@ export class AnnotateDecorator {
                 if (isUncommitted) opacity = 0.5; // Neutral for uncommitted
 
                 if (!revToDecType.has(b.rev)) {
-                    // VS Code Blue: #007acc is a good approximation of the classic blue
-                    const color = isUncommitted ? 'var(--vscode-editorCodeLens-foreground)' : `rgba(0, 122, 204, ${opacity.toFixed(2)})`;
-                    const decType = vscode.window.createTextEditorDecorationType({
-                        before: {
-                            margin: '0 1.5em 0 0',
-                            color: color,
-                            fontWeight: 'normal'
-                        },
-                        rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen
-                    });
+                    let decType = this._authorDecorationTypes.get(`rev-${b.rev}`);
+                    if (!decType) {
+                        const color = isUncommitted ? 'var(--vscode-editorCodeLens-foreground)' : `rgba(0, 122, 204, ${opacity.toFixed(2)})`;
+                        decType = vscode.window.createTextEditorDecorationType({
+                            before: {
+                                margin: '0 1.5em 0 0',
+                                color: color,
+                                fontWeight: 'normal'
+                            },
+                            rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen
+                        });
+                        this._authorDecorationTypes.set(`rev-${b.rev}`, decType);
+                    }
                     revToDecType.set(b.rev, decType);
                     revToDecorations.set(b.rev, []);
-                    this._authorDecorationTypes.set(`rev-${b.rev}`, decType); // Repurpose existing map for cleanup
                 }
 
                 const hover = isUncommitted ? new vscode.MarkdownString('**Uncommitted Change**') :
@@ -146,17 +166,94 @@ export class AnnotateDecorator {
                         }
                     }
                 });
-            });
+            }
 
             // Apply decorations once per revision
-            revToDecorations.forEach((decs, rev) => {
-                const decType = revToDecType.get(rev);
-                if (decType) {
-                    editor.setDecorations(decType, decs);
-                }
+            this._authorDecorationTypes.forEach((decType, revKey) => {
+                const rev = revKey.replace('rev-', '');
+                const decs = revToDecorations.get(rev) || [];
+                editor.setDecorations(decType, decs);
             });
         } catch (err) {
             console.error('Annotate Error:', err);
+        }
+    }
+
+    /**
+     * Handles text document changes to shift or clear annotations on edited lines.
+     */
+    public handleDocumentChange(event: vscode.TextDocumentChangeEvent): void {
+        const fsPath = event.document.uri.fsPath;
+        if (!this._enabledFiles.has(fsPath)) return;
+
+        let state = this._state.get(fsPath);
+        if (!state) return;
+
+        for (const change of event.contentChanges) {
+            const startLine = change.range.start.line;
+            const endLine = change.range.end.line;
+            const linesDeleted = endLine - startLine;
+            const linesAdded = change.text.split('\n').length - 1;
+
+            if (linesDeleted === 0 && linesAdded === 0) {
+                // Modified on a single line
+                continue;
+            }
+
+            state.lineMapping.splice(startLine, linesDeleted);
+            for (let k = 0; k < linesAdded; k++) {
+                state.lineMapping.splice(startLine + k, 0, -1);
+            }
+        }
+
+        // Heal -1 mappings logically just in case of simple Undos that the text diff can fix
+        let i = 0;
+        while (i < state.lineMapping.length) {
+            if (state.lineMapping[i] === -1) {
+                let j = i;
+                while (j < state.lineMapping.length && state.lineMapping[j] === -1) {
+                    j++;
+                }
+                const L = j - i;
+                const prevOrig = i > 0 ? state.lineMapping[i - 1] : -1;
+                const nextOrig = j < state.lineMapping.length ? state.lineMapping[j] : state.originalLinesText.length;
+
+                // Try forward heal
+                let forwardMatch = true;
+                if (prevOrig !== -1 && prevOrig + L < nextOrig) {
+                    for (let k = 0; k < L; k++) {
+                        if (event.document.lineAt(i + k).text !== state.originalLinesText[prevOrig + 1 + k]) {
+                            forwardMatch = false; break;
+                        }
+                    }
+                    if (forwardMatch) {
+                        for (let k = 0; k < L; k++) state.lineMapping[i + k] = prevOrig + 1 + k;
+                    }
+                } else {
+                    forwardMatch = false;
+                }
+
+                // Try backward heal if forward didn't match
+                if (!forwardMatch && nextOrig !== state.originalLinesText.length && nextOrig - L > prevOrig) {
+                    let backwardMatch = true;
+                    for (let k = 0; k < L; k++) {
+                        if (event.document.lineAt(i + k).text !== state.originalLinesText[nextOrig - L + k]) {
+                            backwardMatch = false; break;
+                        }
+                    }
+                    if (backwardMatch) {
+                        for (let k = 0; k < L; k++) state.lineMapping[i + k] = nextOrig - L + k;
+                    }
+                }
+                i = j;
+            } else {
+                i++;
+            }
+        }
+
+        const editor = vscode.window.activeTextEditor;
+        if (editor && editor.document === event.document) {
+            this.updateDecorations(editor);
         }
     }
 

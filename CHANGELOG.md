@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-03-19
+
+### Fixed
+- **SVN Annotate Reliability**:
+  - **Live Editor Sync**: Fixed an issue where annotations became misaligned or disappeared when editing the file; they now shift and follow the code in real-time.
+  - **Flicker-Free Rendering**: Resolved visual "flickering" during typing by implementing a persistent decoration cache.
+  - **Undo/Redo Support**: Annotations are now correctly restored when undoing edits or manually reverting text to its original state.
+  - **Layout Alignment**: Added smart spacing for new uncommitted lines to ensure perfect vertical alignment in the editor gutter.
+
 ## [2.1.0] - 2026-03-10
 
 ### Added
