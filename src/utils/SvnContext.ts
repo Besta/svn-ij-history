@@ -29,7 +29,7 @@ export class SvnContext implements vscode.Disposable {
         this.annotateDecorator = new AnnotateDecorator(this.svnService);
         this.historyProvider = new SvnHistoryTreeProvider(this.repository);
         this.detailsProvider = new SvnDetailsTreeProvider(this.svnService);
-        this.decorationProvider = new SvnFileDecorationProvider();
+        this.decorationProvider = new SvnFileDecorationProvider(this.svnService);
 
         this.historyView = vscode.window.createTreeView('svn-ij-history.history-tree', {
             treeDataProvider: this.historyProvider

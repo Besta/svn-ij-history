@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-03-19
+
+### Added
+- **Native File Coloring**: SVN file status colors (Added, Modified, Deleted) are now displayed directly in the VS Code Explorer and Editor Tabs.
+- **Changelist Support**: Distinctive coloring for files in the active changelist (standard modified color) vs. inactive/specific changelists (theme-consistent red/orange).
+- **Auto-Discovery**: Improved SVN workspace detection to support repositories located in subfolders (e.g., `/trunk`).
+- **Real-time Updates**: Status decorations refresh automatically upon file saving.
+
 ## [2.1.1] - 2026-03-19
 
 ### Fixed

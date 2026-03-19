@@ -91,3 +91,28 @@ export interface SvnAnnotateEntryXml {
         date: string;
     };
 }
+
+/**
+ * Strict typing for SVN Status XML output
+ */
+export interface SvnStatusXml {
+    status?: {
+        target?: {
+            entry?: SvnStatusEntryXml | SvnStatusEntryXml[];
+            changelist?: SvnChangelistXml | SvnChangelistXml[];
+        };
+        changelist?: SvnChangelistXml | SvnChangelistXml[];
+    };
+}
+
+export interface SvnChangelistXml {
+    name: string;
+    entry: SvnStatusEntryXml | SvnStatusEntryXml[];
+}
+
+export interface SvnStatusEntryXml {
+    path: string;
+    'wc-status'?: {
+        item: string;
+    };
+}

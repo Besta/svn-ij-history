@@ -9,6 +9,11 @@ Bring the powerful **IntelliJ-style SVN History** experience to Visual Studio Co
 ### 📅 Smart Timeline
 Commits are automatically grouped into intuitive time periods like **Today**, **Yesterday**, **Last Week**, or **Older**, with real-time counters showing exactly how many commits are in each group.
 
+### 🎨 Native File Coloring
+Instantly identify your SVN changes in the **Explorer** and **Editor Tabs**.
+- **Themed Colors**: Automatically matches your active VS Code theme using standard `gitDecoration` variables.
+- **Active vs. Inactive**: Smartly distinguishes between files in the active changelist and those in other/specific changelists.
+
 ### 🎨 Professional Annotations (Annotate)
 Get instant context on every line of code without leaving the editor.
 - **IntelliJ-style Gutter**: Author names and revisions are displayed on the left side, with automatic author-based coloring.

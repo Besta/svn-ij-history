@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { DateUtils } from './DateUtils';
@@ -12,7 +13,10 @@ import {
     SvnPathXml,
     SvnInfoXml,
     SvnAnnotateXml,
-    SvnAnnotateEntryXml
+    SvnAnnotateEntryXml,
+    SvnStatusXml,
+    SvnChangelistXml,
+    SvnStatusEntryXml
 } from './SvnInterfaces';
 
 const execFileAsync = promisify(execFile);
@@ -130,6 +134,59 @@ export class SvnService {
     }
 
     /**
+     * Gets the current SVN status of the workspace, including changelists.
+     * Returns a Map of File AbsolutePath -> { status: string, changelist?: string }
+     */
+    public async getWorkspaceStatus(): Promise<Map<string, { status: string, changelist?: string }>> {
+        const statusMap = new Map<string, { status: string, changelist?: string }>();
+        try {
+            const stdout = await this.executeSvn(['status', '--xml']);
+            const jsonObj = this._parser.parse(stdout) as SvnStatusXml;
+            const target = jsonObj?.status?.target;
+            const statusChangelists = jsonObj?.status?.changelist;
+            
+            if (!target && !statusChangelists) return statusMap;
+
+            const processEntries = (entries: SvnStatusEntryXml | SvnStatusEntryXml[] | undefined, changelistName?: string) => {
+                if (!entries) return;
+                const entryList = Array.isArray(entries) ? entries : [entries];
+                for (const entry of entryList) {
+                    const absPath = path.resolve(this.workspaceRoot, entry.path);
+                    statusMap.set(absPath, {
+                        status: entry['wc-status']?.item || 'none',
+                        changelist: changelistName
+                    });
+                }
+            };
+
+            const processChangelistList = (cl: SvnChangelistXml | SvnChangelistXml[]) => {
+                const clList = Array.isArray(cl) ? cl : [cl];
+                for (const changelist of clList) {
+                    processEntries(changelist.entry, changelist.name);
+                }
+            };
+
+            // 1. Process entries in target
+            if (target?.entry) {
+                processEntries(target.entry);
+            }
+
+            // 2. Process changelists in target (older SVN?)
+            if (target?.changelist) {
+                processChangelistList(target.changelist);
+            }
+
+            // 3. Process changelists in status (newer SVN - seen in user logs)
+            if (statusChangelists) {
+                processChangelistList(statusChangelists);
+            }
+        } catch (err) {
+            console.error('Error fetching SVN status', err);
+        }
+        return statusMap;
+    }
+
+    /**
      * Parses SVN XML log output into SvnCommit objects.
      */
     private parseXml(xml: string): SvnCommit[] {
@@ -171,6 +228,7 @@ export class SvnService {
             };
         });
     }
+
 
     /**
      * Parses SVN XML annotate output.

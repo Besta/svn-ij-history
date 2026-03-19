@@ -42,6 +42,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // 2.5 Register Decoration Provider
     context.subscriptions.push(vscode.window.registerFileDecorationProvider(svnContext.decorationProvider));
 
+    // Initial SVN status cache load (after provider is registered so events propagate)
+    svnContext.decorationProvider.updateStatusCache();
+
+    // Listen to file saves to update the SVN status cache
+    context.subscriptions.push(
+        vscode.workspace.onDidSaveTextDocument(() => {
+            svnContext.decorationProvider.updateStatusCache();
+        })
+    );
+
     // 3. UI Status Management
     const updateTreeViewDescription = () => {
         const total = svnContext.repository.commits.length;
