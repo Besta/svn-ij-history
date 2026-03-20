@@ -137,7 +137,21 @@ export class AnnotateDecorator {
                 if (!revToDecType.has(b.rev)) {
                     let decType = this._authorDecorationTypes.get(`rev-${b.rev}`);
                     if (!decType) {
-                        const color = isUncommitted ? 'var(--vscode-editorCodeLens-foreground)' : `rgba(0, 122, 204, ${opacity.toFixed(2)})`;
+                        const scheme = vscode.workspace.getConfiguration('svn-ij-history').get<string>('annotateColorScheme') || 'blue';
+                        let color: string;
+                        if (isUncommitted) {
+                            color = 'var(--vscode-editorCodeLens-foreground)';
+                        } else if (scheme === 'rainbow') {
+                            const hue = Math.floor((revIndex / (revCount > 1 ? revCount - 1 : 1)) * 360);
+                            color = `hsla(${hue}, 70%, 50%, ${opacity.toFixed(2)})`;
+                        } else if (scheme === 'heatmap') {
+                            // Cold (blue) to Hot (red)
+                            const hue = Math.floor(240 - ((revIndex / (revCount > 1 ? revCount - 1 : 1)) * 240));
+                            color = `hsla(${hue}, 80%, 50%, ${opacity.toFixed(2)})`;
+                        } else {
+                            color = `rgba(0, 122, 204, ${opacity.toFixed(2)})`;
+                        }
+                        
                         decType = vscode.window.createTextEditorDecorationType({
                             before: {
                                 margin: '0 1.5em 0 0',

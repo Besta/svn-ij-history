@@ -24,6 +24,18 @@ export class HistoryCommands {
                     this.context.repository.setSearchValue(val);
                 }
             }),
+            vscode.commands.registerCommand('svn-ij-history.goToRevision', async () => {
+                const rev = await vscode.window.showInputBox({
+                    placeHolder: 'Enter revision number',
+                    prompt: 'Go to specific SVN revision',
+                    validateInput: (val) => {
+                        return /^\d+$/.test(val) ? null : 'Please enter a valid revision number';
+                    }
+                });
+                if (rev) {
+                    await vscode.commands.executeCommand('svn-ij-history.openCommitDetails', rev);
+                }
+            }),
             vscode.commands.registerCommand('svn-ij-history.filterUser', async () => {
                 const users = await this.context.repository.fetchRecentAuthors(200);
                 if (users.length === 0) {

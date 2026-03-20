@@ -33,6 +33,36 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "SVN History",
+      "properties": {
+        "svn-ij-history.defaultLimit": {
+          "type": "integer",
+          "default": 200,
+          "description": "Default number of commits to fetch initially."
+        },
+        "svn-ij-history.dateFormat": {
+          "type": "string",
+          "default": "DD/MM/YYYY, HH:mm",
+          "description": "Date format to use in the history view (e.g., DD/MM/YYYY, HH:mm, or YYYY-MM-DD)."
+        },
+        "svn-ij-history.annotateColorScheme": {
+          "type": "string",
+          "enum": [
+            "blue",
+            "rainbow",
+            "heatmap"
+          ],
+          "default": "blue",
+          "description": "Color scheme for SVN annotate decorators."
+        },
+        "svn-ij-history.autoRefreshOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh SVN features upon saving documents."
+        }
+      }
+    },
     "viewsContainers": {
       "panel": [
         {
@@ -133,6 +163,18 @@
         "icon": "$(go-to-file)"
       },
       {
+        "command": "svn-ij-history.compareLocal",
+        "title": "Compare with Local",
+        "category": "SVN History",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "svn-ij-history.compareClipboard",
+        "title": "Compare with Clipboard",
+        "category": "SVN History",
+        "icon": "$(diff)"
+      },
+      {
         "command": "svn-ij-history.revertFile",
         "title": "Get this Version",
         "category": "SVN History",
@@ -141,6 +183,11 @@
       {
         "command": "svn-ij-history.copyRevision",
         "title": "Copy Revision Number",
+        "category": "SVN History"
+      },
+      {
+        "command": "svn-ij-history.copyCommitMessage",
+        "title": "Copy Commit Message",
         "category": "SVN History"
       },
       {
@@ -164,6 +211,12 @@
         "category": "SVN History"
       },
       {
+        "command": "svn-ij-history.goToRevision",
+        "title": "Go to Revision",
+        "icon": "$(go-to-file)",
+        "category": "SVN History"
+      },
+      {
         "command": "svn-ij-history.applyPatch",
         "title": "Apply Patch",
         "category": "SVN History",
@@ -177,6 +230,22 @@
       }
     ],
     "menus": {
+      "commandPalette": [
+        { "command": "svn-ij-history.openDiff", "when": "false" },
+        { "command": "svn-ij-history.openLocal", "when": "false" },
+        { "command": "svn-ij-history.compareLocal", "when": "false" },
+        { "command": "svn-ij-history.compareClipboard", "when": "false" },
+        { "command": "svn-ij-history.revertFile", "when": "false" },
+        { "command": "svn-ij-history.copyRevision", "when": "false" },
+        { "command": "svn-ij-history.copyCommitMessage", "when": "false" },
+        { "command": "svn-ij-history.copyRelPath", "when": "false" },
+        { "command": "svn-ij-history.copyAbsPath", "when": "false" },
+        { "command": "svn-ij-history.copyFileName", "when": "false" },
+        { "command": "svn-ij-history.compareRevisions", "when": "false" },
+        { "command": "svn-ij-history.clearDetails", "when": "false" },
+        { "command": "svn-ij-history.loadMore", "when": "false" },
+        { "command": "svn-ij-history.clearFilter", "when": "false" }
+      ],
       "scm/title": [
         {
           "command": "svn-ij-history.applyPatch",
@@ -202,17 +271,22 @@
         {
           "command": "svn-ij-history.filterUser",
           "when": "view == svn-ij-history.history-tree",
-          "group": "navigation@2"
+          "group": "1_filters@2"
         },
         {
           "command": "svn-ij-history.filterDate",
           "when": "view == svn-ij-history.history-tree",
-          "group": "navigation@3"
+          "group": "1_filters@3"
         },
         {
           "command": "svn-ij-history.refresh",
           "when": "view == svn-ij-history.history-tree",
-          "group": "navigation@4"
+          "group": "navigation@2"
+        },
+        {
+          "command": "svn-ij-history.goToRevision",
+          "when": "view == svn-ij-history.history-tree",
+          "group": "2_actions"
         }
       ],
       "explorer/context": [
@@ -256,6 +330,16 @@
           "group": "1_clipboard"
         },
         {
+          "command": "svn-ij-history.copyCommitMessage",
+          "when": "view == svn-ij-history.details-tree && viewItem == commit-header",
+          "group": "1_clipboard"
+        },
+        {
+          "command": "svn-ij-history.copyCommitMessage",
+          "when": "view == svn-ij-history.history-tree && viewItem == commit-item",
+          "group": "1_clipboard"
+        },
+        {
           "command": "svn-ij-history.openDiff",
           "when": "view == svn-ij-history.details-tree && viewItem == file-item",
           "group": "inline@1"
@@ -279,6 +363,16 @@
           "command": "svn-ij-history.revertFile",
           "when": "view == svn-ij-history.details-tree && viewItem == file-item",
           "group": "inline@3"
+        },
+        {
+          "command": "svn-ij-history.compareLocal",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "2_modification"
+        },
+        {
+          "command": "svn-ij-history.compareClipboard",
+          "when": "view == svn-ij-history.details-tree && viewItem == file-item",
+          "group": "2_modification"
         },
         {
           "command": "svn-ij-history.revertFile",

@@ -68,6 +68,19 @@ export class FileCommands {
                     vscode.window.showInformationMessage(`Revision ${rev} copied to clipboard.`);
                 }
             }),
+            vscode.commands.registerCommand('svn-ij-history.copyCommitMessage', (item: SvnTreeItem | SvnDetailItem) => {
+                let msg: string | undefined;
+                if (item instanceof SvnTreeItem && item.commit) {
+                    msg = item.commit.msg;
+                } else if (item instanceof SvnDetailItem && item.fullMessage) {
+                    msg = item.fullMessage;
+                }
+
+                if (msg) {
+                    vscode.env.clipboard.writeText(msg);
+                    vscode.window.showInformationMessage('Commit message copied to clipboard.');
+                }
+            }),
             vscode.commands.registerCommand('svn-ij-history.copyRelPath', (item: SvnDetailItem) => {
                 if (item.file) {
                     vscode.env.clipboard.writeText(path.normalize(PathUtils.cleanRepoPath(item.file.path)));
@@ -108,6 +121,76 @@ export class FileCommands {
                     } else {
                         await vscode.window.showTextDocument(uri);
                     }
+                }
+            }),
+            vscode.commands.registerCommand('svn-ij-history.compareLocal', async (item: SvnDetailItem) => {
+                if (!item.file) return;
+                const { path: repoPath, rev } = item.file;
+                const fileName = path.basename(repoPath);
+
+                let absolutePath = PathUtils.toFsPath(repoPath, this.context.workspaceRoot);
+
+                if (!fs.existsSync(absolutePath)) {
+                    const targetName = repoPath.split('/').pop();
+                    if (targetName) {
+                        const files = await vscode.workspace.findFiles(`**/${targetName}`, '**/node_modules/**', 1);
+                        if (files.length > 0) absolutePath = files[0].fsPath;
+                    }
+                }
+
+                if (!fs.existsSync(absolutePath)) {
+                    vscode.window.showErrorMessage('Could not find the local file to compare with.');
+                    return;
+                }
+
+                try {
+                    const rootUrl = await this.context.svnService.getRepoRoot();
+                    const fullUrl = `${rootUrl}${repoPath}`;
+                    const content = await this.context.svnService.getFileContent(fullUrl, rev);
+
+                    const tmpDir = os.tmpdir();
+                    const pathRev = path.join(tmpDir, `svn-ij-r${rev}_${fileName}`);
+                    fs.writeFileSync(pathRev, content);
+                    this.tmpFiles.add(pathRev);
+
+                    await vscode.commands.executeCommand('vscode.diff',
+                        vscode.Uri.file(pathRev),
+                        vscode.Uri.file(absolutePath),
+                        `${fileName} (r${rev} ↔ Local File)`
+                    );
+                } catch {
+                    // SvnService handled notification
+                }
+            }),
+            vscode.commands.registerCommand('svn-ij-history.compareClipboard', async (item: SvnDetailItem) => {
+                if (!item.file) return;
+                const { path: repoPath, rev } = item.file;
+                const fileName = path.basename(repoPath);
+
+                try {
+                    const clipboardText = await vscode.env.clipboard.readText();
+                    
+                    const rootUrl = await this.context.svnService.getRepoRoot();
+                    const fullUrl = `${rootUrl}${repoPath}`;
+                    const content = await this.context.svnService.getFileContent(fullUrl, rev);
+
+                    const tmpDir = os.tmpdir();
+                    const pathRev = path.join(tmpDir, `svn-ij-r${rev}_${fileName}`);
+                    const pathClipboard = path.join(tmpDir, `clipboard_${fileName}`);
+                    
+                    fs.writeFileSync(pathRev, content);
+                    fs.writeFileSync(pathClipboard, clipboardText);
+                    
+                    this.tmpFiles.add(pathRev);
+                    this.tmpFiles.add(pathClipboard);
+
+                    await vscode.commands.executeCommand('vscode.diff',
+                        vscode.Uri.file(pathRev),
+                        vscode.Uri.file(pathClipboard),
+                        `${fileName} (r${rev} ↔ Clipboard)`
+                    );
+                } catch {
+                    // Handled
                 }
             }),
             vscode.commands.registerCommand('svn-ij-history.revertFile', async (item: SvnDetailItem) => {

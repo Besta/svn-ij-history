@@ -9,7 +9,7 @@ import { SvnCommit } from './SvnInterfaces';
  */
 export class SvnRepository implements vscode.Disposable {
     private _commits: SvnCommit[] = [];
-    private _limit: number = 200;
+    private _limit: number = vscode.workspace.getConfiguration('svn-ij-history').get<number>('defaultLimit') ?? 200;
     private _fileFilter?: string;
     private _searchValue: string = '';
     private _startDate?: Date;
@@ -44,7 +44,7 @@ export class SvnRepository implements vscode.Disposable {
     }
 
     public async refresh(): Promise<void> {
-        this._limit = 200;
+        this._limit = vscode.workspace.getConfiguration('svn-ij-history').get<number>('defaultLimit') ?? 200;
         await this.loadCommits();
     }
 
@@ -55,7 +55,7 @@ export class SvnRepository implements vscode.Disposable {
 
     public async showFileHistory(absoluteFilePath: string): Promise<void> {
         this._fileFilter = absoluteFilePath;
-        this._limit = 200;
+        this._limit = vscode.workspace.getConfiguration('svn-ij-history').get<number>('defaultLimit') ?? 200;
         await this.loadCommits();
     }
 
@@ -67,7 +67,7 @@ export class SvnRepository implements vscode.Disposable {
     public async setDateFilter(start?: Date, end?: Date): Promise<void> {
         this._startDate = start;
         this._endDate = end;
-        this._limit = 200;
+        this._limit = vscode.workspace.getConfiguration('svn-ij-history').get<number>('defaultLimit') ?? 200;
         await this.loadCommits();
     }
 
@@ -76,7 +76,7 @@ export class SvnRepository implements vscode.Disposable {
         this._searchValue = '';
         this._startDate = undefined;
         this._endDate = undefined;
-        this._limit = 200;
+        this._limit = vscode.workspace.getConfiguration('svn-ij-history').get<number>('defaultLimit') ?? 200;
         await this.loadCommits();
     }
 

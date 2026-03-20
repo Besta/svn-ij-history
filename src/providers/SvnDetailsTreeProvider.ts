@@ -11,7 +11,8 @@ export class SvnDetailItem extends vscode.TreeItem {
         public readonly contextValue: string,
         private readonly workspaceRoot: string,
         public readonly file?: { action: string; path: string; rev: string; kind?: string },
-        public readonly revNumber?: string
+        public readonly revNumber?: string,
+        public readonly fullMessage?: string
     ) {
         super(label, collapsibleState);
 
@@ -77,16 +78,20 @@ export class SvnDetailsTreeProvider implements vscode.TreeDataProvider<SvnDetail
 
         if (!element) {
             // Root items: Consolidated Header + Files Header
-            const msgLabel = this._commit.msg.split('\n')[0];
+            const msgLines = this._commit.msg.split('\n');
+            const msgLabel = msgLines[0];
             const headerLabel = `r${this._commit.rev} - ${msgLabel}`;
+            const isExpandable = msgLines.length > 1 || msgLabel.length > 57;
+
             const items: SvnDetailItem[] = [
                 new SvnDetailItem(
                     headerLabel.length > 60 ? headerLabel.substring(0, 57) + '...' : headerLabel,
-                    vscode.TreeItemCollapsibleState.None,
+                    isExpandable ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
                     'commit-header',
                     this.svnService.workspaceRoot,
                     undefined,
-                    this._commit.rev
+                    this._commit.rev,
+                    this._commit.msg
                 ),
                 new SvnDetailItem(
                     `Changed Files (${this._commit.files.length})`,
@@ -98,6 +103,30 @@ export class SvnDetailsTreeProvider implements vscode.TreeDataProvider<SvnDetail
             // Tooltip for full message
             items[0].tooltip = `Revision ${this._commit.rev}\n\n${this._commit.msg}`;
             return items;
+        }
+
+        if (element.contextValue === 'commit-header') {
+            const rawLines = this._commit.msg.split('\n');
+            const lines: string[] = [];
+
+            for (const rawLine of rawLines) {
+                if (rawLine.length > 80) {
+                    for (let i = 0; i < rawLine.length; i += 80) {
+                        lines.push(rawLine.substr(i, 80));
+                    }
+                } else {
+                    lines.push(rawLine || ' ');
+                }
+            }
+
+            return lines.map(line => {
+                return new SvnDetailItem(
+                    line,
+                    vscode.TreeItemCollapsibleState.None,
+                    'commit-message-line',
+                    this.svnService.workspaceRoot
+                );
+            });
         }
 
         if (element.contextValue === 'files-header') {
