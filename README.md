@@ -24,11 +24,13 @@ Get instant context on every line of code without leaving the editor.
 Experience a seamless, high-performance UI built entirely on VS Code native components:
 - **Native TreeViews**: Both the History and Details panels use native TreeViews for lightning-fast scanning and perfect theme integration.
 - **Rich Iconography**: Integration with `@vscode/codicons` for file types and git-like actions (A/M/D).
-- **Clipboard Power Actions**: Right-click any file or commit to copy **Revision Number**, **Filenames**, or **Normalized Paths** (Absolute or Relative).
+- **Clipboard Power Actions**: Right-click any file or commit to copy **Revision Number**, **Commit Message**, **Filenames**, or **Normalized Paths** (Absolute or Relative).
+- **Smart Commit Display**: Long commit messages or multi-line messages are automatically chunked and beautifully rendered as collapsible items in the details tree.
 
 ### ⚡ Power User Actions
 - **Single-Click Workflow**: Simply click a commit to view its details or load more logs instantly.
-- **Quick Diff**: Double-click any file in the details list to open the native VS Code diff editor and compare revisions.
+- **Quick Diff**: Double-click any file in the details list to open the native VS Code diff editor and compare it with its previous version.
+- **Compare with Local/Clipboard**: Right-click any file to compare its SVN state directly with your current local checkout or clipboard contents.
 - **Get Version (Revert)**: Overwrite your local workspace file with a specific revision from history (includes a safety confirmation dialog).
 - **Apply Patch**: Apply local `.patch` or `.diff` files directly to your SVN workspace using the new button in the Source Control panel.
 - **Explorer & Editor Integration**: Right-click any file in the Explorer or Editor tab to view its SVN history.
@@ -36,7 +38,15 @@ Experience a seamless, high-performance UI built entirely on VS Code native comp
 ### 🔍 Search & Filtering
 - **Real-time Filter**: Search through hundreds of commits by **Author**, **Message**, or **Revision number**.
 - **User Filtering**: Quickly filter history to show only commits from specific project contributors.
-- **Fast Performance**: Uses incremental loading (50 commits per batch) to keep the UI snappy even in massive repositories.
+- **Go to Revision**: Prompt-based jumping to a specific SVN revision by typing its number.
+- **Fast Performance**: Uses incremental loading to keep the UI snappy even in massive repositories.
+
+### ⚙️ Full Customizability
+Tailor the extension to your exact needs via VS Code settings (`svn-ij-history.*`):
+- `defaultLimit`: Adjust initial commit fetch count (default 200).
+- `dateFormat`: Control the date format displayed in the history tree.
+- `annotateColorScheme`: Choose between 'blue', 'rainbow', or 'heatmap' for SVN annotate decorations.
+- `autoRefreshOnSave`: Toggle auto-refresh behavior when saving files.
 
 ### ⌨️ Keyboard Mastery
 Stay in the flow with full keyboard support:

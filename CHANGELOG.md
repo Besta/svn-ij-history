@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-03-20
+
+### Added
+- **Compare File With...**: Added robust commands to compare any SVN file revision with your current local checkout or clipboard contents natively via `vscode.diff`.
+- **Commit Details Mastery**: 
+  - Added new "Copy Commit Message" action in the context menus.
+  - Long commit messages in the details tree are now intelligently chunked and rendered as collapsible tree items for perfect readability.
+- **Go to Revision**: Prompt-based jumping to a specific SVN revision by typing its number.
+- **Full Customizability**: Added 4 major settings under VS Code Preferences (`svn-ij-history.*`):
+  - `defaultLimit`: Adjust initial commit fetch count.
+  - `dateFormat`: Control the date format displayed in the history tree.
+  - `annotateColorScheme`: Choose between 'blue', 'rainbow', or 'heatmap' for SVN annotate decorations.
+  - `autoRefreshOnSave`: Toggle auto-refresh behavior.
+- **UI & Command Cleanups**: 
+  - Streamlined the History View title bar by moving secondary actions into the `...` overflow menu.
+  - Removed context-dependent SVN actions from the global Command Palette (`Cmd+Shift+P`) to maintain a cleaner VS Code experience.
+
 ## [2.2.0] - 2026-03-19
 
 ### Added
