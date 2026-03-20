@@ -62,6 +62,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         const endDate = svnContext.repository.endDate;
 
         vscode.commands.executeCommand('setContext', 'svn-ij-history:isFiltered', filtered);
+        vscode.commands.executeCommand('setContext', 'svn-ij-history:isFileHistoryActive', !!fileFilter);
 
         svnContext.historyView.title = 'History';
         const commitInfo = filtered ? `${count} of ${total} commits` : `${total} commits`;

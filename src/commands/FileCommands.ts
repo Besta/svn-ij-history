@@ -141,6 +141,49 @@ export class FileCommands {
                 } catch {
                     // SvnService already handled the UI notification
                 }
+            }),
+            vscode.commands.registerCommand('svn-ij-history.compareRevisions', async (_item: SvnTreeItem, items: SvnTreeItem[]) => {
+                if (!items || items.length !== 2) {
+                    vscode.window.showInformationMessage('Please select exactly two revisions to compare.');
+                    return;
+                }
+                const fileFilter = this.context.repository.fileFilter;
+                if (!fileFilter) return;
+
+                const commit1 = items[0].commit;
+                const commit2 = items[1].commit;
+                if (!commit1 || !commit2) return;
+
+                // Sort by revision to have rLow < rHigh
+                const [c1, c2] = [commit1, commit2].sort((a, b) => parseInt(a.rev) - parseInt(b.rev));
+                const revLow = c1.rev;
+                const revHigh = c2.rev;
+                const fileName = path.basename(fileFilter);
+
+                try {
+                    const [contentLow, contentHigh] = await Promise.all([
+                        this.context.svnService.getFileContent(fileFilter, revLow),
+                        this.context.svnService.getFileContent(fileFilter, revHigh)
+                    ]);
+
+                    const tmpDir = os.tmpdir();
+                    const pathLow = path.join(tmpDir, `svn-ij-r${revLow}_${fileName}`);
+                    const pathHigh = path.join(tmpDir, `svn-ij-r${revHigh}_${fileName}`);
+
+                    fs.writeFileSync(pathLow, contentLow);
+                    fs.writeFileSync(pathHigh, contentHigh);
+
+                    this.tmpFiles.add(pathLow);
+                    this.tmpFiles.add(pathHigh);
+
+                    await vscode.commands.executeCommand('vscode.diff',
+                        vscode.Uri.file(pathLow),
+                        vscode.Uri.file(pathHigh),
+                        `${fileName} (r${revLow} ↔ r${revHigh})`
+                    );
+                } catch {
+                    // SvnService already handled the UI notification
+                }
             })
         );
     }

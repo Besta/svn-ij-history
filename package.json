@@ -48,7 +48,8 @@
           "id": "svn-ij-history.history-tree",
           "name": "History",
           "type": "tree",
-          "icon": "$(history)"
+          "icon": "$(history)",
+          "canSelectMany": true
         },
         {
           "type": "tree",
@@ -167,6 +168,12 @@
         "title": "Apply Patch",
         "category": "SVN History",
         "icon": "$(file-symlink-file)"
+      },
+      {
+        "command": "svn-ij-history.compareRevisions",
+        "title": "Compare Selected Revisions",
+        "category": "SVN History",
+        "icon": "$(diff)"
       }
     ],
     "menus": {
@@ -237,6 +244,11 @@
           "command": "svn-ij-history.copyRevision",
           "when": "view == svn-ij-history.history-tree && viewItem == commit-item",
           "group": "1_clipboard"
+        },
+        {
+          "command": "svn-ij-history.compareRevisions",
+          "when": "view == svn-ij-history.history-tree && viewItem == commit-item && svn-ij-history:isFileHistoryActive",
+          "group": "7_modification"
         },
         {
           "command": "svn-ij-history.copyRevision",
