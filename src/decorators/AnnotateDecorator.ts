@@ -89,8 +89,8 @@ export class AnnotateDecorator {
             state.originalData.forEach(b => {
                 const rev = (b.rev === '0' || !b.rev) ? '' : b.rev;
                 const author = (b.rev === '0' || !b.rev) ? '' : b.author;
-                if (rev.length > maxRevLen) maxRevLen = rev.length;
-                if (author.length > maxAuthorLen) maxAuthorLen = author.length;
+                if (rev.length > maxRevLen) {maxRevLen = rev.length;}
+                if (author.length > maxAuthorLen) {maxAuthorLen = author.length;}
             });
 
             const originalMap = new Map<number, AnnotateLine>();
@@ -132,7 +132,7 @@ export class AnnotateDecorator {
                     opacity = 0.2 + (0.8 * (revIndex / (revCount - 1)));
                 }
 
-                if (isUncommitted) opacity = 0.5; // Neutral for uncommitted
+                if (isUncommitted) {opacity = 0.5;} // Neutral for uncommitted
 
                 if (!revToDecType.has(b.rev)) {
                     let decType = this._authorDecorationTypes.get(`rev-${b.rev}`);
@@ -198,10 +198,10 @@ export class AnnotateDecorator {
      */
     public handleDocumentChange(event: vscode.TextDocumentChangeEvent): void {
         const fsPath = event.document.uri.fsPath;
-        if (!this._enabledFiles.has(fsPath)) return;
+        if (!this._enabledFiles.has(fsPath)) {return;}
 
         let state = this._state.get(fsPath);
-        if (!state) return;
+        if (!state) {return;}
 
         for (const change of event.contentChanges) {
             const startLine = change.range.start.line;
@@ -241,7 +241,7 @@ export class AnnotateDecorator {
                         }
                     }
                     if (forwardMatch) {
-                        for (let k = 0; k < L; k++) state.lineMapping[i + k] = prevOrig + 1 + k;
+                        for (let k = 0; k < L; k++) {state.lineMapping[i + k] = prevOrig + 1 + k;}
                     }
                 } else {
                     forwardMatch = false;
@@ -256,7 +256,7 @@ export class AnnotateDecorator {
                         }
                     }
                     if (backwardMatch) {
-                        for (let k = 0; k < L; k++) state.lineMapping[i + k] = nextOrig - L + k;
+                        for (let k = 0; k < L; k++) {state.lineMapping[i + k] = nextOrig - L + k;}
                     }
                 }
                 i = j;

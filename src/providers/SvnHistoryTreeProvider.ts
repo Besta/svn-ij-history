@@ -56,7 +56,7 @@ export class SvnHistoryTreeProvider implements vscode.TreeDataProvider<SvnTreeIt
             const root = this.repository.svnService.workspaceRoot;
             parts.push(`file: ${fileFilter.startsWith(root) ? fileFilter.substring(root.length + 1) : fileFilter}`);
         }
-        if (this.repository.searchValue) parts.push(`"${this.repository.searchValue}"`);
+        if (this.repository.searchValue) {parts.push(`"${this.repository.searchValue}"`);}
         return parts.join(', ');
     }
 
@@ -75,7 +75,7 @@ export class SvnHistoryTreeProvider implements vscode.TreeDataProvider<SvnTreeIt
             const groups = new Map<string, SvnCommit[]>();
             this.repository.filteredCommits.forEach(c => {
                 const group = c.groupLabel;
-                if (!groups.has(group)) groups.set(group, []);
+                if (!groups.has(group)) {groups.set(group, []);}
                 groups.get(group)!.push(c);
             });
 

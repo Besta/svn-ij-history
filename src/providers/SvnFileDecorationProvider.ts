@@ -42,7 +42,7 @@ export class SvnFileDecorationProvider implements vscode.FileDecorationProvider,
 
     private provideFileDecorationForUri(uri: vscode.Uri): vscode.ProviderResult<vscode.FileDecoration> {
         const statusInfo = this.statusCache.get(uri.fsPath);
-        if (!statusInfo) return undefined;
+        if (!statusInfo) {return undefined;}
 
         if (statusInfo.status === 'added') {
             return {

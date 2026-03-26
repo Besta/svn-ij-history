@@ -34,7 +34,7 @@ export class SvnRepository implements vscode.Disposable {
 
     public get filteredCommits(): SvnCommit[] {
         const search = this._searchValue.toLowerCase();
-        if (!search) return this._commits;
+        if (!search) {return this._commits;}
 
         return this._commits.filter(c =>
             c.msg.toLowerCase().includes(search) ||

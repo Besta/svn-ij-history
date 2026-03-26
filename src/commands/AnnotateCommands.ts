@@ -4,7 +4,7 @@ import { SvnContext } from '../utils/SvnContext';
 export class AnnotateCommands {
     constructor(private context: SvnContext) { }
 
-    public register(context: vscode.ExtensionContext) {
+    public register(context: vscode.ExtensionContext): void {
         context.subscriptions.push(
             vscode.commands.registerCommand('svn-ij-history.toggleAnnotate', async () => {
                 const editor = vscode.window.activeTextEditor;
@@ -40,7 +40,7 @@ export class AnnotateCommands {
         this.updateAnnotateContext(vscode.window.activeTextEditor);
     }
 
-    private updateAnnotateContext(editor?: vscode.TextEditor) {
+    private updateAnnotateContext(editor?: vscode.TextEditor): void {
         const isActive = editor ? this.context.annotateDecorator.isEnabled(editor.document.uri) : false;
         vscode.commands.executeCommand('setContext', 'svn-ij-history:isAnnotateActive', isActive);
     }

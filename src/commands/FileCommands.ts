@@ -20,10 +20,10 @@ export class FileCommands {
         });
     }
 
-    public register(context: vscode.ExtensionContext) {
+    public register(context: vscode.ExtensionContext): void {
         context.subscriptions.push(
             vscode.commands.registerCommand('svn-ij-history.openDiff', async (item: SvnDetailItem) => {
-                if (!item.file) return;
+                if (!item.file) {return;}
                 const { path: repoPath, rev } = item.file;
                 const prevRev = (parseInt(rev) - 1).toString();
                 const fileName = repoPath.split('/').pop() || 'file';
@@ -97,7 +97,7 @@ export class FileCommands {
                 }
             }),
             vscode.commands.registerCommand('svn-ij-history.openLocal', async (item: SvnDetailItem) => {
-                if (!item.file) return;
+                if (!item.file) {return;}
                 let absolutePath = PathUtils.toFsPath(item.file.path, this.context.workspaceRoot);
 
                 if (!fs.existsSync(absolutePath)) {
@@ -124,7 +124,7 @@ export class FileCommands {
                 }
             }),
             vscode.commands.registerCommand('svn-ij-history.compareLocal', async (item: SvnDetailItem) => {
-                if (!item.file) return;
+                if (!item.file) {return;}
                 const { path: repoPath, rev } = item.file;
                 const fileName = path.basename(repoPath);
 
@@ -134,7 +134,7 @@ export class FileCommands {
                     const targetName = repoPath.split('/').pop();
                     if (targetName) {
                         const files = await vscode.workspace.findFiles(`**/${targetName}`, '**/node_modules/**', 1);
-                        if (files.length > 0) absolutePath = files[0].fsPath;
+                        if (files.length > 0) {absolutePath = files[0].fsPath;}
                     }
                 }
 
@@ -163,7 +163,7 @@ export class FileCommands {
                 }
             }),
             vscode.commands.registerCommand('svn-ij-history.compareClipboard', async (item: SvnDetailItem) => {
-                if (!item.file) return;
+                if (!item.file) {return;}
                 const { path: repoPath, rev } = item.file;
                 const fileName = path.basename(repoPath);
 
@@ -194,7 +194,7 @@ export class FileCommands {
                 }
             }),
             vscode.commands.registerCommand('svn-ij-history.revertFile', async (item: SvnDetailItem) => {
-                if (!item.file) return;
+                if (!item.file) {return;}
                 const { path: repoPath, rev } = item.file;
                 const choice = await vscode.window.showWarningMessage(
                     `Are you sure you want to overwrite your local file with version r${rev}?`,
@@ -202,7 +202,7 @@ export class FileCommands {
                     'Overwrite'
                 );
 
-                if (choice !== 'Overwrite') return;
+                if (choice !== 'Overwrite') {return;}
 
                 try {
                     const rootUrl = await this.context.svnService.getRepoRoot();
@@ -215,7 +215,7 @@ export class FileCommands {
                         const targetName = repoPath.split('/').pop();
                         if (targetName) {
                             const files = await vscode.workspace.findFiles(`**/${targetName}`, '**/node_modules/**', 1);
-                            if (files.length > 0) absolutePath = files[0].fsPath;
+                            if (files.length > 0) {absolutePath = files[0].fsPath;}
                         }
                     }
 
@@ -231,11 +231,11 @@ export class FileCommands {
                     return;
                 }
                 const fileFilter = this.context.repository.fileFilter;
-                if (!fileFilter) return;
+                if (!fileFilter) {return;}
 
                 const commit1 = items[0].commit;
                 const commit2 = items[1].commit;
-                if (!commit1 || !commit2) return;
+                if (!commit1 || !commit2) {return;}
 
                 // Sort by revision to have rLow < rHigh
                 const [c1, c2] = [commit1, commit2].sort((a, b) => parseInt(a.rev) - parseInt(b.rev));

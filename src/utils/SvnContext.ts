@@ -17,8 +17,8 @@ export class SvnContext implements vscode.Disposable {
     public readonly historyProvider: SvnHistoryTreeProvider;
     public readonly detailsProvider: SvnDetailsTreeProvider;
     public readonly decorationProvider: SvnFileDecorationProvider;
-    public readonly historyView: vscode.TreeView<any>;
-    public readonly detailsView: vscode.TreeView<any>;
+    public readonly historyView: vscode.TreeView<import('../providers/SvnHistoryTreeProvider').SvnTreeItem>;
+    public readonly detailsView: vscode.TreeView<import('../providers/SvnDetailsTreeProvider').SvnDetailItem>;
 
     constructor(
         public readonly extensionContext: vscode.ExtensionContext,
@@ -42,7 +42,7 @@ export class SvnContext implements vscode.Disposable {
         extensionContext.subscriptions.push(this);
     }
 
-    public dispose() {
+    public dispose(): void {
         this.historyView.dispose();
         this.detailsView.dispose();
         this.annotateDecorator.dispose();

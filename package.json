@@ -2,7 +2,7 @@
   "name": "svn-ij-history",
   "displayName": "SVN IntelliJ-style History",
   "description": "SVN history viewer inspired by IntelliJ with advanced search, timeline grouping, and quick diff.",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "publisher": "SimoneBestazza",
   "license": "MIT",
   "repository": {

@@ -65,7 +65,7 @@ export class CheckoutCommands {
                     // Save the initial URL to history on first successful connection
                     history = history.filter(u => u !== initialUrl);
                     history.unshift(initialUrl);
-                    if (history.length > 15) history.pop();
+                    if (history.length > 15) {history.pop();}
                     await this.svnContext.extensionContext.globalState.update(historyKey, history);
                     hasSavedHistory = true;
                 }
@@ -127,8 +127,8 @@ export class CheckoutCommands {
                     // e.g. "No subdirectories found"
                     // continue loop
                 }
-            } catch (err: any) {
-                vscode.window.showErrorMessage(`SVN List Error: ${err.message || err}`);
+            } catch (err: unknown) {
+                vscode.window.showErrorMessage(`SVN List Error: ${err instanceof Error ? err.message : err}`);
                 return;
             }
         }
@@ -182,8 +182,8 @@ export class CheckoutCommands {
                 });
                 try {
                     await this.svnContext.svnService.checkout(currentUrl!, destinationPath, controller.signal);
-                } catch (err: any) {
-                    if (err.name === 'AbortError' || isCancelled) {
+                } catch (err: unknown) {
+                    if (err instanceof Error && err.name === 'AbortError' || isCancelled) {
                         return; // Handle silently for cancellation
                     }
                     throw err;
@@ -203,8 +203,8 @@ export class CheckoutCommands {
             if (choice === 'Open folder') {
                 vscode.commands.executeCommand('vscode.openFolder', finalDestinationUri, true);
             }
-        } catch (err: any) {
-             vscode.window.showErrorMessage(`SVN Checkout Error: ${err.message || err}`);
+        } catch (err: unknown) {
+             vscode.window.showErrorMessage(`SVN Checkout Error: ${err instanceof Error ? err.message : err}`);
         }
     }
 }

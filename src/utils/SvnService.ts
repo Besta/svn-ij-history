@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { execFile } from 'child_process';
+import { execFile, ExecException } from 'child_process';
 import { promisify } from 'util';
 import { DateUtils } from './DateUtils';
 import { XMLParser } from 'fast-xml-parser';
@@ -51,17 +51,18 @@ export class SvnService {
         try {
             const { stdout } = await execFileAsync('svn', args, { cwd: this.workspaceRoot, signal });
             return stdout;
-        } catch (err: any) {
-            if (err.name === 'AbortError') {
-                throw err;
+        } catch (err: unknown) {
+            const error = err as ExecException & { stderr?: string };
+            if (error.name === 'AbortError') {
+                throw error;
             }
-            const message = err.stderr || err.message || '';
+            const message = error.stderr || error.message || '';
             if (message.includes('is not a working copy')) {
                 vscode.window.showWarningMessage('The current folder is not an SVN working copy.');
             } else {
                 vscode.window.showErrorMessage(`SVN Error: ${message}`);
             }
-            throw err;
+            throw error;
         }
     }
 
@@ -151,10 +152,10 @@ export class SvnService {
             const target = jsonObj?.status?.target;
             const statusChangelists = jsonObj?.status?.changelist;
             
-            if (!target && !statusChangelists) return statusMap;
+            if (!target && !statusChangelists) {return statusMap;}
 
-            const processEntries = (entries: SvnStatusEntryXml | SvnStatusEntryXml[] | undefined, changelistName?: string) => {
-                if (!entries) return;
+            const processEntries = (entries: SvnStatusEntryXml | SvnStatusEntryXml[] | undefined, changelistName?: string): void => {
+                if (!entries) {return;}
                 const entryList = Array.isArray(entries) ? entries : [entries];
                 for (const entry of entryList) {
                     const absPath = path.resolve(this.workspaceRoot, entry.path);
@@ -165,7 +166,7 @@ export class SvnService {
                 }
             };
 
-            const processChangelistList = (cl: SvnChangelistXml | SvnChangelistXml[]) => {
+            const processChangelistList = (cl: SvnChangelistXml | SvnChangelistXml[]): void => {
                 const clList = Array.isArray(cl) ? cl : [cl];
                 for (const changelist of clList) {
                     processEntries(changelist.entry, changelist.name);
@@ -186,7 +187,7 @@ export class SvnService {
             if (statusChangelists) {
                 processChangelistList(statusChangelists);
             }
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('Error fetching SVN status', err);
         }
         return statusMap;

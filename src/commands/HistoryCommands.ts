@@ -4,7 +4,7 @@ import { SvnContext } from '../utils/SvnContext';
 export class HistoryCommands {
     constructor(private context: SvnContext) { }
 
-    public register(context: vscode.ExtensionContext) {
+    public register(context: vscode.ExtensionContext): void {
         context.subscriptions.push(
             vscode.commands.registerCommand('svn-ij-history.refresh', () => {
                 this.context.historyProvider.refresh();
@@ -62,7 +62,7 @@ export class HistoryCommands {
                     placeHolder: 'Filter commits by date'
                 });
 
-                if (!selected) return;
+                if (!selected) {return;}
 
                 if (selected.label === 'Clear Date Filter') {
                     this.context.repository.setDateFilter(undefined, undefined);
@@ -70,7 +70,7 @@ export class HistoryCommands {
                 }
 
                 if (selected.label === 'Select Date...') {
-                    const parseDate = (s: string) => {
+                    const parseDate = (s: string): Date => {
                         const [d, m, y] = s.split('/').map(Number);
                         return new Date(y, m - 1, d);
                     };
@@ -79,7 +79,7 @@ export class HistoryCommands {
                         placeHolder: 'DD/MM/YYYY',
                         prompt: 'Enter date to filter history',
                         validateInput: (val) => {
-                            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(val)) return 'Invalid format. Use DD/MM/YYYY';
+                            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(val)) {return 'Invalid format. Use DD/MM/YYYY';}
                             const [d, m, y] = val.split('/').map(Number);
                             const date = new Date(y, m - 1, d);
                             return isNaN(date.getTime()) ? 'Invalid date' : null;
@@ -90,7 +90,7 @@ export class HistoryCommands {
                         this.context.repository.setDateFilter(date, date);
                     }
                 } else if (selected.label === 'Select Range...') {
-                    const parseDate = (s: string) => {
+                    const parseDate = (s: string): Date => {
                         const [d, m, y] = s.split('/').map(Number);
                         return new Date(y, m - 1, d);
                     };
@@ -99,23 +99,23 @@ export class HistoryCommands {
                         placeHolder: 'DD/MM/YYYY',
                         prompt: 'Enter START date (DD/MM/YYYY)',
                         validateInput: (val) => {
-                            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(val)) return 'Invalid format. Use DD/MM/YYYY';
+                            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(val)) {return 'Invalid format. Use DD/MM/YYYY';}
                             const [d, m, y] = val.split('/').map(Number);
                             const date = new Date(y, m - 1, d);
                             return isNaN(date.getTime()) ? 'Invalid date' : null;
                         }
                     });
-                    if (!startStr) return;
+                    if (!startStr) {return;}
 
                     const endStr = await vscode.window.showInputBox({
                         placeHolder: 'DD/MM/YYYY',
                         prompt: 'Enter END date (DD/MM/YYYY)',
                         validateInput: (val) => {
-                            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(val)) return 'Invalid format. Use DD/MM/YYYY';
+                            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(val)) {return 'Invalid format. Use DD/MM/YYYY';}
                             const [d, m, y] = val.split('/').map(Number);
                             const endDate = new Date(y, m - 1, d);
-                            if (isNaN(endDate.getTime())) return 'Invalid date';
-                            if (endDate < parseDate(startStr)) return 'End date must be after start date';
+                            if (isNaN(endDate.getTime())) {return 'Invalid date';}
+                            if (endDate < parseDate(startStr)) {return 'End date must be after start date';}
                             return null;
                         }
                     });
@@ -159,8 +159,8 @@ export class HistoryCommands {
                         await this.context.svnService.applyPatch(patchFilePath);
                         vscode.window.showInformationMessage(`Patch applied successfully: ${patchFilePath}`);
                         vscode.commands.executeCommand('svn-ij-history.refresh');
-                    } catch (err: any) {
-                        vscode.window.showErrorMessage(`Failed to apply patch: ${err.message || err}`);
+                    } catch (err: unknown) {
+                        vscode.window.showErrorMessage(`Failed to apply patch: ${err instanceof Error ? err.message : err}`);
                     }
                 }
             })

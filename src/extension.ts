@@ -22,7 +22,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // Check if svn CLI is available in PATH
     try {
         await new Promise<void>((resolve, reject) => {
-            execFile('svn', ['--version', '--quiet'], (err) => {
+            execFile('svn', ['--version', '--quiet'], (err): void => {
                 if (err) { reject(err); } else { resolve(); }
             });
         });
@@ -53,13 +53,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     // Listen to file saves to update the SVN status cache
     context.subscriptions.push(
-        vscode.workspace.onDidSaveTextDocument(() => {
+        vscode.workspace.onDidSaveTextDocument((): void => {
             svnContext.decorationProvider.updateStatusCache();
         })
     );
 
     // 3. UI Status Management
-    const updateTreeViewDescription = () => {
+    const updateTreeViewDescription = (): void => {
         const total = svnContext.repository.commits.length;
         const count = svnContext.repository.filteredCommits.length;
         const filtered = svnContext.repository.isFiltered;
@@ -77,7 +77,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         // Date info
         let dateInfo = '';
         if (startDate) {
-            const formatDate = (d: Date) => {
+            const formatDate = (d: Date): string => {
                 const day = d.getDate().toString().padStart(2, '0');
                 const month = (d.getMonth() + 1).toString().padStart(2, '0');
                 const year = d.getFullYear();
@@ -96,7 +96,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     };
 
     context.subscriptions.push(
-        svnContext.repository.onDidChangeData(() => updateTreeViewDescription())
+        svnContext.repository.onDidChangeData((): void => updateTreeViewDescription())
     );
     updateTreeViewDescription(); // Initial update
 
@@ -105,17 +105,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     // Open details on selection change in history view
     context.subscriptions.push(
-        svnContext.historyView.onDidChangeSelection(e => {
+        svnContext.historyView.onDidChangeSelection((e: vscode.TreeViewSelectionChangeEvent<unknown>): void => {
             if (e.selection.length > 0) {
-                const item = e.selection[0];
+                const item = e.selection[0] as { commit?: { rev: string }; isLoadMore?: boolean };
                 if (item.commit) {
                     vscode.commands.executeCommand('svn-ij-history.openCommitDetails', item.commit.rev);
                 } else if (item.isLoadMore) {
                     vscode.commands.executeCommand('svn-ij-history.loadMore');
                     // Clear selection to allow immediate repeat clicks
                     // Note: TreeView.selection has no public setter, using `as any` as workaround
-                    setTimeout(() => {
-                        (svnContext.historyView as any).selection = [];
+                    setTimeout((): void => {
+                        (svnContext.historyView as unknown as { selection: unknown[] }).selection = [];
                     }, 100);
                 }
             }
