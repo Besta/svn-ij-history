@@ -314,6 +314,10 @@
           "when": "true"
         },
         {
+          "command": "svn-ij-history.setActiveChangelist",
+          "when": "false"
+        },
+        {
           "command": "svn-ij-history.clearActiveChangelist",
           "when": "true"
         }
