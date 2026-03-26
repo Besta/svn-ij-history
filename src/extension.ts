@@ -5,6 +5,7 @@ import { SvnContext } from './utils/SvnContext';
 import { HistoryCommands } from './commands/HistoryCommands';
 import { FileCommands } from './commands/FileCommands';
 import { AnnotateCommands } from './commands/AnnotateCommands';
+import { CheckoutCommands } from './commands/CheckoutCommands';
 import { NpmInstallCheck } from './utils/NpmInstallCheck';
 
 /**
@@ -39,6 +40,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     new HistoryCommands(svnContext).register(context);
     new FileCommands(svnContext).register(context);
     new AnnotateCommands(svnContext).register(context);
+    new CheckoutCommands(svnContext).register(context);
 
     // 2.2 Feature: NPM Install prompt on package.json change
     NpmInstallCheck.activate(context);

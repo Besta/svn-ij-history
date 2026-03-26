@@ -116,3 +116,32 @@ export interface SvnStatusEntryXml {
         item: string;
     };
 }
+
+/**
+ * Strict typing for SVN List XML output
+ */
+export interface SvnListXml {
+    lists: {
+        list: {
+            entry?: SvnListEntryXml | SvnListEntryXml[];
+        };
+    };
+}
+
+export interface SvnListEntryXml {
+    kind: string; // "dir" or "file"
+    name: string;
+    commit?: {
+        revision: string | number;
+        author?: string;
+        date?: string;
+    };
+}
+
+export interface SvnListEntry {
+    kind: 'dir' | 'file';
+    name: string;
+    revision?: string;
+    author?: string;
+    date?: Date;
+}

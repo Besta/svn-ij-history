@@ -16,7 +16,10 @@ import {
     SvnAnnotateEntryXml,
     SvnStatusXml,
     SvnChangelistXml,
-    SvnStatusEntryXml
+    SvnStatusEntryXml,
+    SvnListXml,
+    SvnListEntryXml,
+    SvnListEntry
 } from './SvnInterfaces';
 
 const execFileAsync = promisify(execFile);
@@ -44,11 +47,14 @@ export class SvnService {
     /**
      * Executes an SVN command and handles errors.
      */
-    private async executeSvn(args: string[]): Promise<string> {
+    private async executeSvn(args: string[], signal?: AbortSignal): Promise<string> {
         try {
-            const { stdout } = await execFileAsync('svn', args, { cwd: this.workspaceRoot });
+            const { stdout } = await execFileAsync('svn', args, { cwd: this.workspaceRoot, signal });
             return stdout;
         } catch (err: any) {
+            if (err.name === 'AbortError') {
+                throw err;
+            }
             const message = err.stderr || err.message || '';
             if (message.includes('is not a working copy')) {
                 vscode.window.showWarningMessage('The current folder is not an SVN working copy.');
@@ -187,6 +193,27 @@ export class SvnService {
     }
 
     /**
+     * Lists the contents of a remote SVN directory.
+     * @param url The SVN URL to list.
+     */
+    public async listRemoteDirectories(url: string): Promise<SvnListEntry[]> {
+        // Use non-interactive and trust server certs to avoid hanging on self-signed certs
+        const args = ['ls', '--xml', '--non-interactive', '--trust-server-cert', url];
+        const stdout = await this.executeSvn(args);
+        return this.parseListXml(stdout);
+    }
+
+    /**
+     * Checks out an SVN repository.
+     * @param url The SVN URL to checkout.
+     * @param destination The local folder to checkout into.
+     * @param signal AbortSignal to cancel the checkout.
+     */
+    public async checkout(url: string, destination: string, signal?: AbortSignal): Promise<void> {
+        await this.executeSvn(['checkout', url, destination, '--non-interactive', '--trust-server-cert'], signal);
+    }
+
+    /**
      * Parses SVN XML log output into SvnCommit objects.
      */
     private parseXml(xml: string): SvnCommit[] {
@@ -252,6 +279,28 @@ export class SvnService {
                 rev,
                 author,
                 date
+            };
+        });
+    }
+
+    /**
+     * Parses SVN XML list output.
+     */
+    private parseListXml(xml: string): SvnListEntry[] {
+        const jsonObj = this._parser.parse(xml) as SvnListXml;
+        const entries = jsonObj?.lists?.list?.entry;
+        if (!entries) { return []; }
+
+        const entryList = Array.isArray(entries) ? entries : [entries];
+
+        return entryList.map((entry: SvnListEntryXml) => {
+            const dateStr = entry.commit?.date;
+            return {
+                kind: entry.kind as 'dir' | 'file',
+                name: entry.name,
+                revision: entry.commit?.revision?.toString(),
+                author: entry.commit?.author,
+                date: dateStr ? new Date(dateStr) : undefined
             };
         });
     }

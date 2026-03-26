@@ -227,6 +227,12 @@
         "title": "Compare Selected Revisions",
         "category": "SVN History",
         "icon": "$(diff)"
+      },
+      {
+        "command": "svn-ij-history.checkout",
+        "title": "Interactive Checkout",
+        "category": "SVN History",
+        "icon": "$(root-folder)"
       }
     ],
     "menus": {
@@ -286,6 +292,10 @@
         {
           "command": "svn-ij-history.clearFilter",
           "when": "false"
+        },
+        {
+          "command": "svn-ij-history.checkout",
+          "when": "true"
         }
       ],
       "scm/title": [
