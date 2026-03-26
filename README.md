@@ -34,6 +34,10 @@ Experience a seamless, high-performance UI built entirely on VS Code native comp
 - **Get Version (Revert)**: Overwrite your local workspace file with a specific revision from history (includes a safety confirmation dialog).
 - **Apply Patch**: Apply local `.patch` or `.diff` files directly to your SVN workspace using the new button in the Source Control panel.
 - **Explorer & Editor Integration**: Right-click any file in the Explorer or Editor tab to view its SVN history.
+- **Interactive Checkout**: Use the Command Palette to navigate subdirectories of a remote SVN repository, quickly access past URLs, and checkout directly into your workspace.
+
+### 💡 Smart Assistance
+- **Dependency Detection**: Automatically detects changes to `package.json` dependencies and prompts you to quickly run `npm install` directly from a status notification.
 
 ### 🔍 Search & Filtering
 - **Real-time Filter**: Search through hundreds of commits by **Author**, **Message**, or **Revision number**.
