@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.1] - 2026-03-26
+
+### Added
+- **Code Quality**: Cleaned up the codebase by fixing all remaining TypeScript linting warnings.
+
 ## [2.4.0] - 2026-03-26
 
 ### Added
@@ -14,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Flexible Checkout Destination**: Choose to checkout directly into the selected local directory or automatically create a subfolder using the repository name.
   - **Cancellable Action**: Safely abort a long-running checkout operation via the progress notification.
 - **Dependency Detection**: Added a smart notification that prompts you to run `npm install` when it detects updates to the `dependencies` or `devDependencies` in your workspace `package.json` files.
-- **Code Quality**: Cleaned up the codebase by fixing all remaining TypeScript linting warnings.
 
 ## [2.3.0] - 2026-03-20
 
