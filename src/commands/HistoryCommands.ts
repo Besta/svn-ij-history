@@ -33,7 +33,7 @@ export class HistoryCommands {
                     }
                 });
                 if (rev) {
-                    await vscode.commands.executeCommand('svn-ij-history.openCommitDetails', rev);
+                    await vscode.commands.executeCommand('svn-ij-history.openCommitDetails', rev, true);
                 }
             }),
             vscode.commands.registerCommand('svn-ij-history.filterUser', async () => {
@@ -128,15 +128,19 @@ export class HistoryCommands {
                 const targetUri = fileUri || vscode.window.activeTextEditor?.document.uri;
                 if (targetUri && targetUri.scheme === 'file') {
                     await this.context.repository.showFileHistory(targetUri.fsPath);
+                    vscode.commands.executeCommand('svn-ij-history.history-tree.focus');
                 } else {
                     vscode.window.showErrorMessage('Please select a local file to show history.');
                 }
             }),
-            vscode.commands.registerCommand('svn-ij-history.openCommitDetails', async (rev: string) => {
+            vscode.commands.registerCommand('svn-ij-history.openCommitDetails', async (rev: string, focusView: boolean = false) => {
                 await vscode.commands.executeCommand('setContext', 'svn-ij-history:hasCommitSelected', true);
                 const commit = await this.context.svnService.getCommit(rev);
                 if (commit) {
                     this.context.detailsProvider.setCommit(commit);
+                    if (focusView) {
+                        vscode.commands.executeCommand('svn-ij-history.details-tree.focus');
+                    }
                 }
             }),
             vscode.commands.registerCommand('svn-ij-history.clearDetails', () => {

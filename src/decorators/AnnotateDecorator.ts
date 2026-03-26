@@ -167,7 +167,7 @@ export class AnnotateDecorator {
                 }
 
                 const hover = isUncommitted ? new vscode.MarkdownString('**Uncommitted Change**') :
-                    new vscode.MarkdownString(`### r${b.rev}\n\n**Author:** ${b.author}\n\n**Date:** ${b.date.toLocaleString()}\n\n[➜ Show Details in History Panel](command:svn-ij-history.openCommitDetails?${encodeURIComponent(JSON.stringify([b.rev]))})`);
+                    new vscode.MarkdownString(`### r${b.rev}\n\n**Author:** ${b.author}\n\n**Date:** ${b.date.toLocaleString()}\n\n[➜ Show Details in History Panel](command:svn-ij-history.openCommitDetails?${encodeURIComponent(JSON.stringify([b.rev, true]))})`);
                 hover.isTrusted = true;
                 hover.supportHtml = true;
 
