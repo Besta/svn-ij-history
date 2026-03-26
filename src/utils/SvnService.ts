@@ -215,6 +215,23 @@ export class SvnService {
     }
 
     /**
+     * Adds a file or directory to a changelist in SVN.
+     * @param changelist The name of the changelist.
+     * @param absoluteFilePath The absolute path of the file to add.
+     */
+    public async addToChangelist(changelist: string, absoluteFilePath: string): Promise<void> {
+        await this.executeSvn(['changelist', changelist, absoluteFilePath]);
+    }
+
+    /**
+     * Removes a file or directory from an SVN changelist.
+     * @param absoluteFilePath The absolute path of the file to remove.
+     */
+    public async removeFromChangelist(absoluteFilePath: string): Promise<void> {
+        await this.executeSvn(['changelist', '--remove', absoluteFilePath]);
+    }
+
+    /**
      * Parses SVN XML log output into SvnCommit objects.
      */
     private parseXml(xml: string): SvnCommit[] {

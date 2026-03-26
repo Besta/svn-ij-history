@@ -7,6 +7,7 @@ import { FileCommands } from './commands/FileCommands';
 import { AnnotateCommands } from './commands/AnnotateCommands';
 import { CheckoutCommands } from './commands/CheckoutCommands';
 import { NpmInstallCheck } from './utils/NpmInstallCheck';
+import { ActiveChangelistManager } from './utils/ActiveChangelistManager';
 
 /**
  * This method is called when your extension is activated.
@@ -45,13 +46,49 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // 2.2 Feature: NPM Install prompt on package.json change
     NpmInstallCheck.activate(context);
 
+    // 2.3 Active Changelist Feature
+    const syncAndRefresh = (): void => {
+        // Keep decoration provider in sync with the active changelist name
+        svnContext.decorationProvider.activeChangelist = activeChangelistManager.activeChangelist;
+        svnContext.decorationProvider.updateStatusCache();
+    };
+    const activeChangelistManager = new ActiveChangelistManager(svnContext.svnService, context, syncAndRefresh);
+    context.subscriptions.push(activeChangelistManager);
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('svn-ij-history.setActiveChangelist', (group: any) => {
+            // group.id has format "changelist-Pagamenti"; strip the prefix to get the real SVN name
+            const rawId: string = group?.id ?? '';
+            
+            // The default changelist group in VS Code has id 'changes'
+            if (rawId === 'changes') {
+                activeChangelistManager.setActiveChangelist('<default>');
+                return;
+            }
+
+            const name = rawId.startsWith('changelist-') ? rawId.slice('changelist-'.length) : rawId;
+            if (name) {
+                activeChangelistManager.setActiveChangelist(name);
+            } else {
+                vscode.window.showErrorMessage('Unable to determine changelist name from the selected group.');
+            }
+        })
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('svn-ij-history.clearActiveChangelist', () => {
+            activeChangelistManager.clearActiveChangelist();
+        })
+    );
+
     // 2.5 Register Decoration Provider
     context.subscriptions.push(vscode.window.registerFileDecorationProvider(svnContext.decorationProvider));
 
     // Initial SVN status cache load (after provider is registered so events propagate)
     svnContext.decorationProvider.updateStatusCache();
 
-    // Listen to file saves to update the SVN status cache
+    // Listen to file saves to update the SVN status cache.
+    // Note: when active changelist is set, the manager calls updateStatusCache itself
+    // after the SVN command completes, so no extra delay is needed here.
     context.subscriptions.push(
         vscode.workspace.onDidSaveTextDocument((): void => {
             svnContext.decorationProvider.updateStatusCache();

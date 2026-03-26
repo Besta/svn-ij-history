@@ -60,6 +60,11 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically refresh SVN features upon saving documents."
+        },
+        "svn-ij-history.rememberActiveChangelist": {
+          "type": "boolean",
+          "default": true,
+          "description": "Remember the active SVN changelist across VS Code restarts."
         }
       }
     },
@@ -233,6 +238,17 @@
         "title": "Interactive Checkout",
         "category": "SVN History",
         "icon": "$(root-folder)"
+      },
+      {
+        "command": "svn-ij-history.setActiveChangelist",
+        "title": "Set as Active Changelist",
+        "category": "SVN History",
+        "icon": "$(check)"
+      },
+      {
+        "command": "svn-ij-history.clearActiveChangelist",
+        "title": "Clear Active Changelist",
+        "category": "SVN History"
       }
     ],
     "menus": {
@@ -296,6 +312,22 @@
         {
           "command": "svn-ij-history.checkout",
           "when": "true"
+        },
+        {
+          "command": "svn-ij-history.clearActiveChangelist",
+          "when": "true"
+        }
+      ],
+      "scm/resourceGroup/context": [
+        {
+          "command": "svn-ij-history.setActiveChangelist",
+          "when": "scmProvider == svn",
+          "group": "inline"
+        },
+        {
+          "command": "svn-ij-history.setActiveChangelist",
+          "when": "scmProvider == svn",
+          "group": "1_modification"
         }
       ],
       "scm/title": [
