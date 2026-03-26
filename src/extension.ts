@@ -5,6 +5,7 @@ import { SvnContext } from './utils/SvnContext';
 import { HistoryCommands } from './commands/HistoryCommands';
 import { FileCommands } from './commands/FileCommands';
 import { AnnotateCommands } from './commands/AnnotateCommands';
+import { NpmInstallCheck } from './utils/NpmInstallCheck';
 
 /**
  * This method is called when your extension is activated.
@@ -38,6 +39,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     new HistoryCommands(svnContext).register(context);
     new FileCommands(svnContext).register(context);
     new AnnotateCommands(svnContext).register(context);
+
+    // 2.2 Feature: NPM Install prompt on package.json change
+    NpmInstallCheck.activate(context);
 
     // 2.5 Register Decoration Provider
     context.subscriptions.push(vscode.window.registerFileDecorationProvider(svnContext.decorationProvider));

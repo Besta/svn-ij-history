@@ -231,20 +231,62 @@
     ],
     "menus": {
       "commandPalette": [
-        { "command": "svn-ij-history.openDiff", "when": "false" },
-        { "command": "svn-ij-history.openLocal", "when": "false" },
-        { "command": "svn-ij-history.compareLocal", "when": "false" },
-        { "command": "svn-ij-history.compareClipboard", "when": "false" },
-        { "command": "svn-ij-history.revertFile", "when": "false" },
-        { "command": "svn-ij-history.copyRevision", "when": "false" },
-        { "command": "svn-ij-history.copyCommitMessage", "when": "false" },
-        { "command": "svn-ij-history.copyRelPath", "when": "false" },
-        { "command": "svn-ij-history.copyAbsPath", "when": "false" },
-        { "command": "svn-ij-history.copyFileName", "when": "false" },
-        { "command": "svn-ij-history.compareRevisions", "when": "false" },
-        { "command": "svn-ij-history.clearDetails", "when": "false" },
-        { "command": "svn-ij-history.loadMore", "when": "false" },
-        { "command": "svn-ij-history.clearFilter", "when": "false" }
+        {
+          "command": "svn-ij-history.openDiff",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.openLocal",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.compareLocal",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.compareClipboard",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.revertFile",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.copyRevision",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.copyCommitMessage",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.copyRelPath",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.copyAbsPath",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.copyFileName",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.compareRevisions",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.clearDetails",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.loadMore",
+          "when": "false"
+        },
+        {
+          "command": "svn-ij-history.clearFilter",
+          "when": "false"
+        }
       ],
       "scm/title": [
         {
