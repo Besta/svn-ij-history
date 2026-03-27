@@ -83,4 +83,7 @@ Stay in the flow with full keyboard support:
 
 ---
 
+## 📜 Changelog
+See [CHANGELOG.md](CHANGELOG.md) for a full list of changes and release notes.
+
 **Developed with ❤️ by AI feat Simone Bestazza**

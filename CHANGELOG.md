@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.2] - 2026-03-27
+
+### Added
+- **Active Changelist Management**: Set an active SVN changelist directly from the view context menus. This integrates natively with the VS Code status bar and provides dedicated file decorations to highlight the files you are currently modifying.
+- **Auto-Focus Views**: The History and Details views are now automatically focused and brought to the foreground when opened or triggered.
+
+### Security
+- **Dependencies Updated**: Resolved 9 moderate and high NPM vulnerabilities in development dependencies by enforcing explicit secure package versions.
+
 ## [2.4.1] - 2026-03-26
 
 ### Added
